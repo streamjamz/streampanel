@@ -25,6 +25,8 @@ export default function Assets() {
   const [toast, setToast] = useState<any>(null)
   const [activeGenre, setActiveGenre] = useState<string|null>(null)
   const [editingId, setEditingId] = useState<string|null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkGenre, setBulkGenre] = useState<string|null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const showToast = (msg: string, type='success') => { setToast({msg,type}); setTimeout(()=>setToast(null),3000) }
@@ -95,6 +97,40 @@ export default function Assets() {
     } catch { showToast('Failed to update genres', 'error') }
   }
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const selectAll = () => {
+    if (selectedIds.size === filteredAssets.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredAssets.map((a:any) => a.id)))
+    }
+  }
+
+  const bulkTag = async (genre: string) => {
+    const ids = Array.from(selectedIds)
+    await Promise.all(ids.map(id => {
+      const asset = assets.find((a:any) => a.id === id)
+      const current = asset?.genres || []
+      const updated = current.includes(genre) ? current : [...current, genre]
+      return api.patch(`/assets/${id}/genres`, { genres: updated })
+    }))
+    setAssets(prev => prev.map((a:any) =>
+      selectedIds.has(a.id)
+        ? { ...a, genres: (a.genres||[]).includes(genre) ? a.genres : [...(a.genres||[]), genre] }
+        : a
+    ))
+    setSelectedIds(new Set())
+    setBulkGenre(null)
+    showToast(`Tagged ${ids.length} video${ids.length!==1?'s':''} as ${genre}`)
+  }
+
   const filteredAssets = activeGenre
     ? assets.filter(a => (a.genres || []).includes(activeGenre))
     : assets
@@ -122,6 +158,7 @@ export default function Assets() {
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <input ref={fileRef} type="file" accept="video/*" multiple style={{ display:'none' }} onChange={upload}/>
+            {assets.length > 0 && <button onClick={selectAll} style={{ padding:'7px 14px', borderRadius:'var(--r)', fontSize:12, fontWeight:600, cursor:'pointer', border:'1px solid var(--border)', background:'var(--bg-card)', color:'var(--text-2)' }}>{selectedIds.size===filteredAssets.length && filteredAssets.length>0 ? 'Deselect All' : 'Select All'}</button>}
             <Btn icon="↑" loading={isUploading} onClick={() => fileRef.current?.click()}>Upload Videos</Btn>
           </div>
         </div>
@@ -138,6 +175,23 @@ export default function Assets() {
             >{g}</button>
           ))}
         </div>
+
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', background:'rgba(245,166,35,0.08)', border:'1px solid rgba(245,166,35,0.25)', borderRadius:'var(--r-lg)', marginBottom:16, flexWrap:'wrap' }}>
+            <span style={{ fontSize:13, fontWeight:600, color:'var(--amber)' }}>{selectedIds.size} selected</span>
+            <span style={{ fontSize:12, color:'var(--text-3)' }}>Tag as:</span>
+            {GENRES.map(g => (
+              <button key={g} onClick={() => bulkTag(g)}
+                style={{ padding:'4px 12px', borderRadius:14, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid rgba(245,166,35,0.4)', background:'rgba(245,166,35,0.12)', color:'var(--amber)', transition:'all 0.15s' }}
+                onMouseEnter={(e:any)=>e.currentTarget.style.background='rgba(245,166,35,0.25)'}
+                onMouseLeave={(e:any)=>e.currentTarget.style.background='rgba(245,166,35,0.12)'}
+              >{g}</button>
+            ))}
+            <button onClick={() => setSelectedIds(new Set())}
+              style={{ marginLeft:'auto', background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', fontSize:12 }}>Clear</button>
+          </div>
+        )}
 
         {/* Drop zone */}
         <div
@@ -189,15 +243,16 @@ export default function Assets() {
           </div>
         ) : (
           <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:'var(--r-lg)', overflow:'hidden' }}>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 90px 110px 70px 70px 50px', gap:16, padding:'10px 20px', borderBottom:'1px solid var(--border)', fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
-              <span>Name</span><span>Duration</span><span>Resolution</span><span>Codec</span><span>Size</span><span/>
+            <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 90px 110px 70px 70px 50px', gap:16, padding:'10px 20px', borderBottom:'1px solid var(--border)', fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
+              <span/><span>Name</span><span>Duration</span><span>Resolution</span><span>Codec</span><span>Size</span><span/>
             </div>
             {filteredAssets.map((a, i) => (
               <div key={a.id} style={{ borderBottom:i<filteredAssets.length-1?'1px solid var(--border)':'none' }}>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 90px 110px 70px 70px 50px', gap:16, padding:'14px 20px', alignItems:'center', transition:'background 0.1s' }}
+                <div style={{ display:'grid', gridTemplateColumns:'32px 1fr 90px 110px 70px 70px 50px', gap:16, padding:'14px 20px', alignItems:'center', transition:'background 0.1s', background: selectedIds.has(a.id) ? 'rgba(245,166,35,0.05)' : 'transparent' }}
                   onMouseEnter={(e:any)=>e.currentTarget.style.background='var(--bg-raised)'}
                   onMouseLeave={(e:any)=>e.currentTarget.style.background='transparent'}
                 >
+                  <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} style={{ cursor:'pointer', accentColor:'var(--amber)', width:15, height:15 }}/>
                   <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
                     <div style={{ width:34, height:34, borderRadius:8, background:'var(--bg-raised)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>🎬</div>
                     <div style={{ minWidth:0 }}>
