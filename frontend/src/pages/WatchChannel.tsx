@@ -83,7 +83,8 @@ export default function WatchChannel() {
   )
 
   const { tenant, channel } = data
-  const isLive = channel.state === 'LIVE_ONLY' || channel.state === 'TV_VOD_RUNNING' || channel.state === 'TV_LIVE_RUNNING'
+  const isLive = channel.state === 'LIVE_ONLY' || channel.state === 'TV_LIVE_RUNNING'
+  const isOnAir = channel.state === 'TV_VOD_RUNNING' || channel.state === 'TV_LIVE_RUNNING' || channel.state === 'LIVE_ONLY'
   const isTV = channel.channel_type === 'tv'
   const upcomingSchedule = channel.upcoming_schedule || []
 
@@ -114,7 +115,7 @@ export default function WatchChannel() {
         <div>
           {/* Player */}
           <div style={{ borderRadius:12, overflow:'hidden', background:'#000', border:'1px solid #1a1a1a', marginBottom:18 }}>
-            {isLive ? (
+            {isOnAir ? (
               <HLSPlayer hlsUrl={channel.hls_url}/>
             ) : (
               <div style={{ aspectRatio:'16/9', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:14, background:'#080808', padding:'32px' }}>
@@ -184,6 +185,11 @@ export default function WatchChannel() {
                     <span style={{ width:6, height:6, borderRadius:'50%', background:'#ef4444', animation:'pulse 1.2s ease-in-out infinite', display:'inline-block' }}/>
                     <span style={{ fontSize:10, fontWeight:800, color:'#ef4444', letterSpacing:'0.08em' }}>LIVE</span>
                   </span>
+                ) : isOnAir ? (
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.3)', borderRadius:5, padding:'3px 9px' }}>
+                    <span style={{ width:6, height:6, borderRadius:'50%', background:'#22c55e', animation:'pulse 1.2s ease-in-out infinite', display:'inline-block' }}/>
+                    <span style={{ fontSize:10, fontWeight:800, color:'#22c55e', letterSpacing:'0.08em' }}>ON AIR</span>
+                  </span>
                 ) : (
                   <span style={{ display:'inline-flex', alignItems:'center', gap:5, background:'rgba(107,114,128,0.1)', border:'1px solid rgba(107,114,128,0.2)', borderRadius:5, padding:'3px 9px' }}>
                     <span style={{ fontSize:10, fontWeight:700, color:'#6b7280', letterSpacing:'0.08em' }}>OFFLINE</span>
@@ -249,7 +255,8 @@ function OtherChannels({ tenantSlug, currentSlug }: { tenantSlug: string, curren
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
       {channels.map((ch: any) => {
-        const isLive = ch.state === 'LIVE_ONLY' || ch.state === 'TV_VOD_RUNNING' || ch.state === 'TV_LIVE_RUNNING'
+        const isLive = ch.state === 'LIVE_ONLY' || ch.state === 'TV_LIVE_RUNNING'
+        const isOnAir = ch.state === 'TV_VOD_RUNNING' || ch.state === 'TV_LIVE_RUNNING' || ch.state === 'LIVE_ONLY'
         return (
           <Link key={ch.id} to={`/watch/${tenantSlug}/${ch.slug}`}
             style={{ display:'flex', gap:10, padding:'10px', borderRadius:9, border:`1px solid ${isLive ? 'rgba(34,197,94,0.15)' : '#1a1a1a'}`, background:'#111', transition:'all 0.15s' }}
