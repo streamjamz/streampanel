@@ -15,12 +15,16 @@ interface UploadItem {
   error?: string
 }
 
+const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+
 export default function Assets() {
   const { id: channelId } = useParams<{ id: string }>()
   const [assets, setAssets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [toast, setToast] = useState<any>(null)
+  const [activeGenre, setActiveGenre] = useState<string|null>(null)
+  const [editingId, setEditingId] = useState<string|null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const showToast = (msg: string, type='success') => { setToast({msg,type}); setTimeout(()=>setToast(null),3000) }
@@ -81,6 +85,20 @@ export default function Assets() {
     catch { showToast('Delete failed','error') }
   }
 
+  const toggleGenre = async (assetId: string, currentGenres: string[], genre: string) => {
+    const updated = currentGenres.includes(genre)
+      ? currentGenres.filter(g => g !== genre)
+      : [...currentGenres, genre]
+    try {
+      await api.patch(`/assets/${assetId}/genres`, { genres: updated })
+      setAssets(prev => prev.map(a => a.id === assetId ? { ...a, genres: updated } : a))
+    } catch { showToast('Failed to update genres', 'error') }
+  }
+
+  const filteredAssets = activeGenre
+    ? assets.filter(a => (a.genres || []).includes(activeGenre))
+    : assets
+
   const statusStyle = (s: string): React.CSSProperties => ({
     display:'inline-block', marginTop:2, padding:'1px 6px', borderRadius:3, fontSize:10, fontWeight:600, fontFamily:'var(--mono)',
     background: s==='ready'?'var(--green-dim)':s==='error'?'var(--red-dim)':'var(--amber-dim)',
@@ -100,12 +118,25 @@ export default function Assets() {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:28 }}>
           <div>
             <h1 style={{ fontSize:26, fontWeight:800, marginBottom:6, letterSpacing:'-0.02em' }}>Assets</h1>
-            <p style={{ fontSize:13, color:'var(--text-2)' }}>{assets.length} video file{assets.length!==1?'s':''}</p>
+            <p style={{ fontSize:13, color:'var(--text-2)' }}>{filteredAssets.length}{activeGenre ? ` ${activeGenre}` : ''} video file{filteredAssets.length!==1?'s':''}</p>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <input ref={fileRef} type="file" accept="video/*" multiple style={{ display:'none' }} onChange={upload}/>
             <Btn icon="↑" loading={isUploading} onClick={() => fileRef.current?.click()}>Upload Videos</Btn>
           </div>
+        </div>
+
+        {/* Genre filter */}
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:20 }}>
+          <button
+            onClick={() => setActiveGenre(null)}
+            style={{ padding:'5px 14px', borderRadius:20, fontSize:12, fontWeight:600, cursor:'pointer', border:'1px solid var(--border)', background: activeGenre===null ? 'var(--amber)' : 'var(--bg-card)', color: activeGenre===null ? '#000' : 'var(--text-2)', transition:'all 0.15s' }}
+          >All</button>
+          {GENRES.map(g => (
+            <button key={g} onClick={() => setActiveGenre(activeGenre===g ? null : g)}
+              style={{ padding:'5px 14px', borderRadius:20, fontSize:12, fontWeight:600, cursor:'pointer', border:'1px solid var(--border)', background: activeGenre===g ? 'var(--amber)' : 'var(--bg-card)', color: activeGenre===g ? '#000' : 'var(--text-2)', transition:'all 0.15s' }}
+            >{g}</button>
+          ))}
         </div>
 
         {/* Drop zone */}
@@ -161,28 +192,51 @@ export default function Assets() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 90px 110px 70px 70px 50px', gap:16, padding:'10px 20px', borderBottom:'1px solid var(--border)', fontSize:11, fontWeight:600, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em' }}>
               <span>Name</span><span>Duration</span><span>Resolution</span><span>Codec</span><span>Size</span><span/>
             </div>
-            {assets.map((a, i) => (
-              <div key={a.id} style={{ display:'grid', gridTemplateColumns:'1fr 90px 110px 70px 70px 50px', gap:16, padding:'14px 20px', borderBottom:i<assets.length-1?'1px solid var(--border)':'none', alignItems:'center', transition:'background 0.1s' }}
-                onMouseEnter={(e:any)=>e.currentTarget.style.background='var(--bg-raised)'}
-                onMouseLeave={(e:any)=>e.currentTarget.style.background='transparent'}
-              >
-                <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
-                  <div style={{ width:34, height:34, borderRadius:8, background:'var(--bg-raised)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>🎬</div>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.original_name}</div>
-                    <span style={statusStyle(a.status)}>{a.status}</span>
+            {filteredAssets.map((a, i) => (
+              <div key={a.id} style={{ borderBottom:i<filteredAssets.length-1?'1px solid var(--border)':'none' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 90px 110px 70px 70px 50px', gap:16, padding:'14px 20px', alignItems:'center', transition:'background 0.1s' }}
+                  onMouseEnter={(e:any)=>e.currentTarget.style.background='var(--bg-raised)'}
+                  onMouseLeave={(e:any)=>e.currentTarget.style.background='transparent'}
+                >
+                  <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
+                    <div style={{ width:34, height:34, borderRadius:8, background:'var(--bg-raised)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>🎬</div>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.original_name}</div>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:3, flexWrap:'wrap' }}>
+                        <span style={statusStyle(a.status)}>{a.status}</span>
+                        {(a.genres||[]).map((g:string) => (
+                          <span key={g} style={{ padding:'1px 7px', borderRadius:10, fontSize:10, fontWeight:600, background:'rgba(245,166,35,0.12)', color:'var(--amber)', border:'1px solid rgba(245,166,35,0.25)' }}>{g}</span>
+                        ))}
+                        <button onClick={() => setEditingId(editingId===a.id ? null : a.id)}
+                          style={{ background:'none', border:'1px dashed var(--border)', borderRadius:10, color:'var(--text-3)', cursor:'pointer', fontSize:10, padding:'1px 7px', lineHeight:1.6 }}>
+                          {editingId===a.id ? 'done' : '+ genre'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text-2)' }}>{fmtDur(a.duration_secs)}</span>
+                  <span style={{ fontSize:12, color:'var(--text-2)' }}>{a.width?`${a.width}×${a.height}`:'—'}</span>
+                  <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text-2)' }}>{a.video_codec??'—'}</span>
+                  <span style={{ fontSize:12, color:'var(--text-2)' }}>{fmtSize(a.file_size)}</span>
+                  <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                    <button onClick={() => del(a.id, a.original_name)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', fontSize:14, padding:'2px 6px', borderRadius:4, transition:'color 0.12s' }}
+                      onMouseEnter={(e:any)=>e.currentTarget.style.color='var(--red)'}
+                      onMouseLeave={(e:any)=>e.currentTarget.style.color='var(--text-3)'}
+                    >✕</button>
                   </div>
                 </div>
-                <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text-2)' }}>{fmtDur(a.duration_secs)}</span>
-                <span style={{ fontSize:12, color:'var(--text-2)' }}>{a.width?`${a.width}×${a.height}`:'—'}</span>
-                <span style={{ fontSize:12, fontFamily:'var(--mono)', color:'var(--text-2)' }}>{a.video_codec??'—'}</span>
-                <span style={{ fontSize:12, color:'var(--text-2)' }}>{fmtSize(a.file_size)}</span>
-                <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                  <button onClick={() => del(a.id, a.original_name)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', fontSize:14, padding:'2px 6px', borderRadius:4, transition:'color 0.12s' }}
-                    onMouseEnter={(e:any)=>e.currentTarget.style.color='var(--red)'}
-                    onMouseLeave={(e:any)=>e.currentTarget.style.color='var(--text-3)'}
-                  >✕</button>
-                </div>
+                {editingId===a.id && (
+                  <div style={{ padding:'10px 20px 14px 76px', background:'var(--bg-raised)', display:'flex', gap:8, flexWrap:'wrap' }}>
+                    {GENRES.map(g => {
+                      const active = (a.genres||[]).includes(g)
+                      return (
+                        <button key={g} onClick={() => toggleGenre(a.id, a.genres||[], g)}
+                          style={{ padding:'4px 12px', borderRadius:14, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid', borderColor: active?'var(--amber)':'var(--border)', background: active?'rgba(245,166,35,0.15)':'transparent', color: active?'var(--amber)':'var(--text-2)', transition:'all 0.15s' }}
+                        >{g}</button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -31,6 +31,7 @@ def _asset_dict(a: Asset) -> dict:
         "audio_channels": getattr(a, "audio_channels", None),
         "file_size": a.file_size,
         "created_at": a.created_at.isoformat() if a.created_at else None,
+        "genres": a.genres or [],
     }
 
 
@@ -107,3 +108,17 @@ async def delete_asset(
     await db.delete(asset)
     await db.commit()
     return {"status": "deleted"}
+@router.patch("/{asset_id}/genres")
+async def update_asset_genres(
+    asset_id: uuid.UUID,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+    user=Depends(require_role(["operator", "tenant_admin", "super_admin"])),
+):
+    asset = await db.get(Asset, asset_id)
+    if not asset or asset.tenant_id != user.tenant_id:
+        raise HTTPException(404, detail="Asset not found")
+    asset.genres = body.get("genres", [])
+    await db.commit()
+    await db.refresh(asset)
+    return _asset_dict(asset)

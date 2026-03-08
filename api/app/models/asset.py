@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-from sqlalchemy import DateTime, String, Boolean, Integer, Text, ForeignKey, Numeric, BigInteger
+from sqlalchemy import DateTime, String, Boolean, Integer, Text, ForeignKey, Numeric, BigInteger, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
@@ -27,4 +27,5 @@ class Asset(Base):
     # status: processing | ready | error
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+    genres: Mapped[list] = mapped_column(ARRAY(String), nullable=True, default=list)
     tenant = relationship("Tenant", back_populates="assets")
