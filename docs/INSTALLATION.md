@@ -29,7 +29,7 @@ The installer will prompt for:
 
 - Python 3.11, Node.js 20, FFmpeg 5+
 - PostgreSQL 15, Redis 7
-- SRS 6.0 (RTMP/HLS/WebRTC)
+- SRS 7.0 (RTMP/HLS/WebRTC)
 - Nginx (reverse proxy + static files)
 - All StreamPanel services
 
