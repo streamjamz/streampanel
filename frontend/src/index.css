@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0b0f17;
+  --bg-card:   #111620;
+  --bg-raised: #171e2e;
+  --bg-input:  #0d1119;
+  --border:    #1e2a3d;
+  --border-hi: #283a56;
+
+  --amber:     #f5a623;
+  --amber-dim: rgba(245,166,35,0.1);
+  --amber-glow:rgba(245,166,35,0.2);
+
+  --red:       #ff4d6a;
+  --red-dim:   rgba(255,77,106,0.12);
+  --green:     #2ecc8f;
+  --green-dim: rgba(46,204,143,0.1);
+  --blue:      #4d9fff;
+  --blue-dim:  rgba(77,159,255,0.1);
+
+  --text:      #dce8f5;
+  --text-2:    #7a93b5;
+  --text-3:    #3d5270;
+
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Syne', sans-serif;
+
+  --r:    6px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+::selection { background: var(--amber-dim); color: var(--amber); }
+
+@keyframes pulse       { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+@keyframes fadein      { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+@keyframes slideright  { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+@keyframes scanline    { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+@keyframes spin        { to{transform:rotate(360deg)} }
+@keyframes blink       { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+.animate-in { animation: fadein 0.25s ease both; }
