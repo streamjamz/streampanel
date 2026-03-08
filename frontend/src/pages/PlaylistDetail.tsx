@@ -137,6 +137,10 @@ export default function PlaylistDetail() {
             {availableAssets.length === 0 ? (
               <div style={{ fontSize: 13, color: 'var(--text-3)' }}>All ready assets are already in this playlist</div>
             ) : (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                  <Btn variant="outline" size="sm" onClick={async () => { for (const a of availableAssets) { await api.post(`/playlists/${id}/items`, { asset_id: a.id }) } load(); showToast(`✓ Added ${availableAssets.length} assets`); setAddingAsset(false) }}>+ Select All</Btn>
+                </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
                 {availableAssets.map((a: any) => (
                   <button key={a.id} onClick={() => addAsset(a.id)}
@@ -150,7 +154,7 @@ export default function PlaylistDetail() {
                     </span>
                   </button>
                 ))}
-              </div>
+              </div></div>
             )}
           </div>
         )}

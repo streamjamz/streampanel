@@ -220,31 +220,7 @@ function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
             </>
           )}
 
-          {!isLive && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <Link to={`/channels/${ch.id}/assets`} style={{ textDecoration: 'none' }}>
-                <div style={{ padding: '8px 12px', borderRadius: 'var(--r)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text)', background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={(e: any) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e: any) => e.currentTarget.style.background = 'transparent'}>
-                  ⬆ Upload Videos
-                </div>
-              </Link>
-              <Link to={`/playlists`} style={{ textDecoration: 'none' }}>
-                <div style={{ padding: '8px 12px', borderRadius: 'var(--r)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text)', background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={(e: any) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e: any) => e.currentTarget.style.background = 'transparent'}>
-                  ♫ Manage Playlists
-                </div>
-              </Link>
-              <Link to={`/channels/${ch.id}/schedule`} style={{ textDecoration: 'none' }}>
-                <div style={{ padding: '8px 12px', borderRadius: 'var(--r)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text)', background: 'transparent', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={(e: any) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                  onMouseLeave={(e: any) => e.currentTarget.style.background = 'transparent'}>
-                  🕐 Schedule
-                </div>
-              </Link>
-            </div>
-          )}
+
         </div>
       </div>
     </div>

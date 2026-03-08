@@ -394,16 +394,7 @@ export default function ChannelDetail() {
                   </div>
                 ))}
               </div>
-              {isTV && (
-                <div style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:'var(--r-lg)', overflow:'hidden' }}>
-                  {[['📁 Assets',`/channels/${id}/assets`],['🗓 Schedule',`/channels/${id}/schedule`]].map(([label, href]) => (
-                    <Link key={href} to={href} style={{ display:'flex', justifyContent:'space-between', padding:'12px 16px', fontSize:13, borderBottom:'1px solid var(--border)', textDecoration:'none', color:'var(--text)', transition:'background 0.1s' }}
-                      onMouseEnter={(e:any)=>e.currentTarget.style.background='var(--bg-raised)'}
-                      onMouseLeave={(e:any)=>e.currentTarget.style.background='transparent'}
-                    ><span>{label}</span><span style={{ color:'var(--text-3)' }}>→</span></Link>
-                  ))}
-                </div>
-              )}
+
             </div>
           </div>
         )}

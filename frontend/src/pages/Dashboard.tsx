@@ -256,25 +256,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Quick links */}
-                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', padding: '20px 22px' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Quick Access</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {[
-                      { label: 'Upload Video', icon: '⬆️', to: channels[0] ? `/channels/${channels[0].id}/assets` : '/' },
-                      { label: 'Manage Playlists', icon: '🎵', to: channels[0] ? `/channels/${channels[0].id}/playlists` : '/' },
-                      { label: 'Schedule', icon: '🕐', to: channels[0] ? `/channels/${channels[0].id}/schedule` : '/' },
-                    ].map(l => (
-                      <Link key={l.label} to={l.to} style={{ textDecoration: 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 'var(--r)', background: 'rgba(255,255,255,0.03)', fontSize: 13, color: 'var(--text)', transition: 'background 0.15s' }}
-                          onMouseEnter={(e: any) => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
-                          onMouseLeave={(e: any) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
-                          <span>{l.icon}</span><span>{l.label}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>

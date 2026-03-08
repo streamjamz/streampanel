@@ -1,4 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { api } from '../api/client'
 import { useAuthStore } from '../store/auth'
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -6,18 +8,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const logout = useAuthStore(s => s.logout)
   const role = useAuthStore(s => s.role)
   const isSuperAdmin = role === 'super_admin'
+  const [firstChannelId, setFirstChannelId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      api.get('/channels').then(r => { if (r.data?.[0]) setFirstChannelId(r.data[0].id) }).catch(() => {})
+    }
+  }, [isSuperAdmin])
 
   const nav = [
     { href:'/',          icon:'◈', label:'Dashboard' },
-    { href:'/playlists', icon:'♫', label:'Playlists' },
-    { href:'/admin',     icon:'⊙', label:'Admin' },
-    ...(isSuperAdmin ? [{ href:'/tenants', icon:'🏢', label:'Tenants' }] : []),
+    ...((!isSuperAdmin) && firstChannelId ? [
+      { href:`/channels/${firstChannelId}/assets`,   icon:'↑', label:'Upload Videos' },
+      { href:'/playlists',                           icon:'♫', label:'Playlists' },
+      { href:`/channels/${firstChannelId}/schedule`, icon:'📅', label:'Schedule' },
+    ] : []),
+    ...(isSuperAdmin ? [
+      { href:'/playlists', icon:'♫', label:'Playlists' },
+      { href:'/tenants',   icon:'🏢', label:'Tenants' },
+    ] : []),
+    { href:'/admin', icon:'⊙', label:'Admin' },
   ]
 
   return (
     <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
       <aside style={{ width:220, flexShrink:0, background:'var(--bg-card)', borderRight:'1px solid var(--border)', display:'flex', flexDirection:'column', padding:'14px 0', gap:2 }}>
-        
+
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'0 16px', marginBottom:24 }}>
           <div style={{ width:34, height:34, borderRadius:9, flexShrink:0, background:'linear-gradient(135deg, var(--amber) 0%, #c06000 100%)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, color:'#000', fontWeight:900, boxShadow:'0 0 18px var(--amber-glow)' }}>◈</div>
