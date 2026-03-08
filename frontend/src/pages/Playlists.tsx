@@ -12,7 +12,7 @@ function formatDuration(secs: number) {
 }
 
 export default function Playlists() {
-  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
   const [playlists, setPlaylists] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)

@@ -17,7 +17,7 @@ export default function PlaylistDetail() {
   const [assets, setAssets] = useState<any[]>([])
   const [assetGenreFilter, setAssetGenreFilter] = useState<string|null>(null)
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
-  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
+const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
   const [addingAsset, setAddingAsset] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState('')
