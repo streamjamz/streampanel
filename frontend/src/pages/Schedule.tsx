@@ -120,7 +120,7 @@ export default function Schedule() {
   const [editBlock, setEditBlock] = useState<any>(null)
   const [editForm, setEditForm] = useState({ start_time: '', day_mask: 127 })
   const [toast, setToast] = useState<any>(null)
-  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
   const [playlistGenreFilter, setPlaylistGenreFilter] = useState<string | null>(null)
   const [channelTz, setChannelTz] = useState<string>('UTC')
 
