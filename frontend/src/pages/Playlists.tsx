@@ -12,10 +12,12 @@ function formatDuration(secs: number) {
 }
 
 export default function Playlists() {
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
   const [playlists, setPlaylists] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
+  const [filterGenre, setFilterGenre] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
 
   const showToast = (msg: string, type = 'success') => {
@@ -52,6 +54,16 @@ export default function Playlists() {
           <Btn variant="green" icon="+" onClick={() => setCreating(true)}>New Playlist</Btn>
         </div>
 
+        {/* Genre filter */}
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:20 }}>
+          <button onClick={() => setFilterGenre(null)}
+            style={{ padding:'4px 12px', borderRadius:20, border:`1px solid ${filterGenre===null?'var(--amber)':'var(--border)'}`, background:filterGenre===null?'var(--amber-dim)':'transparent', color:filterGenre===null?'var(--amber)':'var(--text-2)', fontSize:12, cursor:'pointer', fontWeight:filterGenre===null?700:400 }}>All</button>
+          {GENRES.map(g => (
+            <button key={g} onClick={() => setFilterGenre(filterGenre===g?null:g)}
+              style={{ padding:'4px 12px', borderRadius:20, border:`1px solid ${filterGenre===g?'var(--amber)':'var(--border)'}`, background:filterGenre===g?'var(--amber-dim)':'transparent', color:filterGenre===g?'var(--amber)':'var(--text-2)', fontSize:12, cursor:'pointer', fontWeight:filterGenre===g?700:400 }}>{g}</button>
+          ))}
+        </div>
+
         {creating && (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--amber)', borderRadius: 'var(--r-lg)', padding: 20, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'center' }}>
             <input
@@ -75,7 +87,7 @@ export default function Playlists() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-            {playlists.map((p: any) => (
+            {playlists.filter((p:any) => !filterGenre || (p.genres||[]).includes(filterGenre)).map((p: any) => (
               <div key={p.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
@@ -86,6 +98,13 @@ export default function Playlists() {
                     <span style={{ fontSize: 10, fontFamily: 'var(--mono)', background: 'var(--amber-dim)', color: 'var(--amber)', border: '1px solid rgba(245,166,35,0.25)', borderRadius: 3, padding: '2px 6px' }}>SHUFFLE</span>
                   )}
                 </div>
+                {(p.genres||[]).length > 0 && (
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
+                    {p.genres.map((g:string) => (
+                      <span key={g} style={{ fontSize:10, padding:'2px 8px', borderRadius:10, background:'rgba(245,166,35,0.1)', border:'1px solid rgba(245,166,35,0.2)', color:'var(--amber)', fontWeight:600 }}>{g}</span>
+                    ))}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: 16 }}>
                   <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
                     <span style={{ fontFamily: 'var(--mono)', color: 'var(--text)', fontWeight: 600 }}>{p.item_count}</span> assets

@@ -30,6 +30,7 @@ def _playlist_dict(p: Playlist, include_items=True) -> dict:
         "name": p.name,
         "description": p.description,
         "shuffle": p.shuffle,
+        "genres": p.genres or [],
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "item_count": len(items),
         "total_duration_secs": sum(
@@ -53,12 +54,14 @@ class PlaylistCreate(BaseModel):
     name: str
     description: Optional[str] = None
     shuffle: bool = False
+    genres: Optional[list] = []
 
 
 class PlaylistUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     shuffle: Optional[bool] = None
+    genres: Optional[list] = None
 
 
 class ItemAdd(BaseModel):
@@ -105,6 +108,7 @@ async def create_playlist(
         name=body.name,
         description=body.description,
         shuffle=body.shuffle,
+        genres=body.genres,
     )
     db.add(p)
     await db.commit()
@@ -149,6 +153,7 @@ async def update_playlist(
     if body.name is not None: p.name = body.name
     if body.description is not None: p.description = body.description
     if body.shuffle is not None: p.shuffle = body.shuffle
+    if body.genres is not None: p.genres = body.genres
     await db.commit()
     result = await db.execute(
         select(Playlist).options(selectinload(Playlist.items).selectinload(PlaylistItem.asset))

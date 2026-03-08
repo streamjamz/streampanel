@@ -120,6 +120,8 @@ export default function Schedule() {
   const [editBlock, setEditBlock] = useState<any>(null)
   const [editForm, setEditForm] = useState({ start_time: '', day_mask: 127 })
   const [toast, setToast] = useState<any>(null)
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+  const [playlistGenreFilter, setPlaylistGenreFilter] = useState<string | null>(null)
   const [channelTz, setChannelTz] = useState<string>('UTC')
 
   const showToast = (msg: string, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000) }
@@ -312,10 +314,20 @@ export default function Schedule() {
                 {assets.filter(a=>a.status==='ready').map(a=><option key={a.id} value={a.id}>{a.original_name}</option>)}
               </Select>
             ) : (
-              <Select label="Playlist" value={form.playlist_id} onChange={(e:any)=>setForm({...form,playlist_id:e.target.value})} required>
-                <option value="">Select playlist…</option>
-                {playlists.map((p:any)=><option key={p.id} value={p.id}>{p.name} ({p.item_count} assets)</option>)}
-              </Select>
+              <div>
+                <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:8 }}>
+                  <button type="button" onClick={() => setPlaylistGenreFilter(null)}
+                    style={{ padding:'2px 10px', borderRadius:20, border:`1px solid ${playlistGenreFilter===null?'var(--amber)':'var(--border)'}`, background:playlistGenreFilter===null?'var(--amber-dim)':'transparent', color:playlistGenreFilter===null?'var(--amber)':'var(--text-2)', fontSize:11, cursor:'pointer' }}>All</button>
+                  {GENRES.map(g => (
+                    <button type="button" key={g} onClick={() => setPlaylistGenreFilter(playlistGenreFilter===g?null:g)}
+                      style={{ padding:'2px 10px', borderRadius:20, border:`1px solid ${playlistGenreFilter===g?'var(--amber)':'var(--border)'}`, background:playlistGenreFilter===g?'var(--amber-dim)':'transparent', color:playlistGenreFilter===g?'var(--amber)':'var(--text-2)', fontSize:11, cursor:'pointer' }}>{g}</button>
+                  ))}
+                </div>
+                <Select label="Playlist" value={form.playlist_id} onChange={(e:any)=>setForm({...form,playlist_id:e.target.value})} required>
+                  <option value="">Select playlist…</option>
+                  {playlists.filter((p:any) => !playlistGenreFilter || (p.genres||[]).includes(playlistGenreFilter)).map((p:any)=><option key={p.id} value={p.id}>{p.name} ({p.item_count} assets)</option>)}
+                </Select>
+              </div>
             )}
             <DayPicker value={form.day_mask} onChange={(v:number)=>setForm({...form,day_mask:v})}/>
             <div style={{ display:'flex', gap:8, justifyContent:'flex-end', paddingTop:8 }}>

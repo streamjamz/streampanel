@@ -16,6 +16,7 @@ export default function PlaylistDetail() {
   const [playlist, setPlaylist] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
   const [addingAsset, setAddingAsset] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState('')
@@ -53,6 +54,11 @@ export default function PlaylistDetail() {
       await api.patch(`/playlists/${id}`, { name })
       setEditingName(false); load(); showToast('✓ Saved')
     } catch { showToast('Save failed', 'error') }
+  }
+
+  const saveGenres = async (genres: string[]) => {
+    try { await api.patch(`/playlists/${id}`, { genres }); load() }
+    catch { showToast('Save failed', 'error') }
   }
 
   const toggleShuffle = async () => {
@@ -127,6 +133,15 @@ export default function PlaylistDetail() {
               ⇌ SHUFFLE {playlist.shuffle ? 'ON' : 'OFF'}
             </button>
             <Btn variant="outline" size="sm" icon="+" onClick={() => setAddingAsset(!addingAsset)}>Add Asset</Btn>
+          </div>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:10 }}>
+            {GENRES.map(g => {
+              const active = (playlist.genres||[]).includes(g)
+              return <button key={g} onClick={() => { const cur = playlist.genres||[]; saveGenres(active?cur.filter((x:string)=>x!==g):[...cur,g]) }}
+                style={{ padding:'3px 12px', borderRadius:20, border:`1px solid ${active?'var(--amber)':'var(--border)'}`, background:active?'var(--amber-dim)':'transparent', color:active?'var(--amber)':'var(--text-2)', fontSize:11, cursor:'pointer', fontWeight:active?700:400 }}>{g}</button>
+            })}
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
           </div>
         </div>
 
