@@ -60,6 +60,17 @@ export default function Assets() {
           onUploadProgress: (p: any) => updateUpload(item.id, { pct: Math.round((p.loaded / (p.total ?? 1)) * 100) }),
         })
         updateUpload(item.id, { status: 'done', pct: 100 })
+        // auto-tag with active genre filter if one is selected
+        if (activeGenre) {
+          try {
+            const res = await api.get('/assets')
+            const all = res.data
+            const latest = all.find((a: any) => !assets.find((ex: any) => ex.id === a.id))
+            if (latest) {
+              await api.patch(`/assets/${latest.id}/genres`, { genres: [activeGenre] })
+            }
+          } catch {}
+        }
         load()
       } catch (err: any) {
         updateUpload(item.id, { status: 'error', error: err.response?.data?.detail ?? 'Upload failed' })
