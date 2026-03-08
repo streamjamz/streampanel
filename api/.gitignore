@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+*.egg-info/
+
+# Environment and secrets
+.env
+panel.env
+*.pem
+*.key
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+logs/
+
+# Media files (too large for git)
+/media/
+/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
