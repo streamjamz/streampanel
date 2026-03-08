@@ -1,0 +1,36 @@
+# Media uploads
+api/uploads/
+api/media/
+api/assets/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.flv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Frontend build
+frontend/dist/
+frontend/node_modules/
+
+# Env files
+.env
+*.env
+panel.env
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
