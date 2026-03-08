@@ -15,7 +15,7 @@ interface UploadItem {
   error?: string
 }
 
-const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
 
 export default function Assets() {
   const { id: channelId } = useParams<{ id: string }>()

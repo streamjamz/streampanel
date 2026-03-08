@@ -15,8 +15,9 @@ export default function PlaylistDetail() {
   const { id } = useParams<{ id: string }>()
   const [playlist, setPlaylist] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
+  const [assetGenreFilter, setAssetGenreFilter] = useState<string|null>(null)
   const [toast, setToast] = useState<{ msg: string; type: string } | null>(null)
-  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop']
+  const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
   const [addingAsset, setAddingAsset] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState('')
@@ -82,7 +83,9 @@ export default function PlaylistDetail() {
 
   const items = playlist.items || []
   const usedAssetIds = new Set(items.map((i: any) => i.asset_id))
-  const availableAssets = assets.filter((a: any) => !usedAssetIds.has(a.id))
+  const availableAssets = assets
+    .filter((a: any) => !usedAssetIds.has(a.id))
+    .filter((a: any) => !assetGenreFilter || (a.genres||[]).includes(assetGenreFilter))
 
   return (
     <Layout>
@@ -149,12 +152,21 @@ export default function PlaylistDetail() {
         {addingAsset && (
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--amber)', borderRadius: 'var(--r-lg)', padding: 16, marginBottom: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Select Asset to Add</div>
+            {/* Asset genre filter */}
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:10 }}>
+              <button onClick={() => setAssetGenreFilter(null)}
+                style={{ padding:'3px 10px', borderRadius:12, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid var(--border)', background: assetGenreFilter===null ? 'var(--amber)' : 'transparent', color: assetGenreFilter===null ? '#000' : 'var(--text-2)' }}>All</button>
+              {GENRES.map(g => (
+                <button key={g} onClick={() => setAssetGenreFilter(assetGenreFilter===g ? null : g)}
+                  style={{ padding:'3px 10px', borderRadius:12, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid var(--border)', background: assetGenreFilter===g ? 'var(--amber)' : 'transparent', color: assetGenreFilter===g ? '#000' : 'var(--text-2)' }}>{g}</button>
+              ))}
+            </div>
             {availableAssets.length === 0 ? (
               <div style={{ fontSize: 13, color: 'var(--text-3)' }}>All ready assets are already in this playlist</div>
             ) : (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                  <Btn variant="outline" size="sm" onClick={async () => { for (const a of availableAssets) { await api.post(`/playlists/${id}/items`, { asset_id: a.id }) } load(); showToast(`✓ Added ${availableAssets.length} assets`); setAddingAsset(false) }}>+ Select All</Btn>
+                  <Btn variant="outline" size="sm" onClick={async () => { for (const a of availableAssets) { await api.post(`/playlists/${id}/items`, { asset_id: a.id }) } load(); showToast(`✓ Added ${availableAssets.length} asset${availableAssets.length!==1?'s':''}`); setAddingAsset(false) }}>+ Select All</Btn>
                 </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
                 {availableAssets.map((a: any) => (
