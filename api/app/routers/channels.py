@@ -43,6 +43,7 @@ class ChannelUpdate(BaseModel):
     live_timeout_seconds: Optional[int] = None
     auto_return_to_vod: Optional[bool] = None
     logo_position: Optional[str] = None
+    description: Optional[str] = None
 
 
 @router.get("")
@@ -437,7 +438,8 @@ async def public_channel(tenant_slug: str, channel_slug: str, db: AsyncSession =
             "state": ch.state,
             "hls_url": srs_manager.hls_play_url(ch.stream_key, ch.channel_type),
             "webrtc_url": srs_manager.webrtc_play_url(ch.stream_key),
-            "upcoming_schedule": upcoming
+            "upcoming_schedule": upcoming,
+            "description": ch.description
         }
     }
 

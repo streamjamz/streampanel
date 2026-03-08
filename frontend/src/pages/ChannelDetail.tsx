@@ -450,6 +450,14 @@ export default function ChannelDetail() {
               </div>
 
               <div style={{ marginBottom:16 }}>
+                <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Station Description</label>
+                <textarea id="desc-input" defaultValue={channel.description || ''} rows={3}
+                  placeholder="Describe your station to viewers..."
+                  style={{ width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', color:'var(--text)', padding:'9px 12px', fontSize:13, boxSizing:'border-box' as const, resize:'vertical', fontFamily:'inherit' }} />
+                <div style={{ fontSize:11, color:'var(--text-3)', marginTop:5 }}>Shown on your public watch page below the player.</div>
+              </div>
+
+              <div style={{ marginBottom:16 }}>
                 <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Live Timeout (seconds)</label>
                 <input id="lt-input" type="number" defaultValue={channel.live_timeout_seconds || 10}
                   style={{ width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', color:'var(--text)', padding:'9px 12px', fontSize:13, boxSizing:'border-box' as const }} />
@@ -462,8 +470,9 @@ export default function ChannelDetail() {
                   const rs = (document.getElementById('rs-select') as HTMLSelectElement).value
                   const lt = parseInt((document.getElementById('lt-input') as HTMLInputElement).value)
                   try {
-                    await api.patch(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt })
-                    setChannel({ ...channel, timezone: tz, return_strategy: rs, live_timeout_seconds: lt })
+                    const desc = (document.getElementById('desc-input') as HTMLTextAreaElement).value
+                    await api.patch(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
+                    setChannel({ ...channel, timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
                     showToast('Settings saved')
                   } catch { showToast('Failed to save settings', 'error') }
                 }}

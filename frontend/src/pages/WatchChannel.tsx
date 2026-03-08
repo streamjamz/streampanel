@@ -220,7 +220,7 @@ export default function WatchChannel() {
             </div>
             <p style={{ fontSize:13, color:'#9ca3af', lineHeight:1.7 }}>
               {isTV
-                ? `${channel.name} is a 24/7 TV station. Programming runs on a schedule — tune in anytime to see what's on.`
+                ? channel.description || `${channel.name} is a 24/7 TV station. Programming runs on a schedule — tune in anytime to see what's on.`
                 : `${channel.name} broadcasts live events. When the stream is offline, check back for the next broadcast.`
               }
             </p>

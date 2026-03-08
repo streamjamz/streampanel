@@ -31,6 +31,7 @@ class Channel(Base):
     last_live_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     offline_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     offline_logo_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     offline_bg_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
