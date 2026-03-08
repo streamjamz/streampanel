@@ -471,7 +471,7 @@ export default function ChannelDetail() {
                   const lt = parseInt((document.getElementById('lt-input') as HTMLInputElement).value)
                   try {
                     const desc = (document.getElementById('desc-input') as HTMLTextAreaElement).value
-                    await api.patch(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
+                    await api.put(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
                     setChannel({ ...channel, timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
                     showToast('Settings saved')
                   } catch { showToast('Failed to save settings', 'error') }
