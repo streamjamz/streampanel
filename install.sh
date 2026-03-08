@@ -65,10 +65,11 @@ log "Node.js $(node --version) ready"
 # ── SRS Media Server ──────────────────────────────────────────
 if ! command -v srs &>/dev/null; then
     info "Installing SRS..."
-    wget -q https://github.com/ossrs/srs/releases/download/v6.0.90/srs_6.0.90.amd64.tar.gz -O /tmp/srs.tar.gz
-    tar -xzf /tmp/srs.tar.gz -C /tmp
-    cp /tmp/srs-6.0.90/objs/srs /usr/local/bin/srs
-    rm -rf /tmp/srs*
+    apt-get install -y git make gcc g++ libssl-dev
+    cd /tmp && git clone --depth 1 --branch v7.0.137 https://github.com/ossrs/srs.git srs-src
+    cd /tmp/srs-src/trunk && ./configure && make -j$(nproc)
+    cp /tmp/srs-src/trunk/objs/srs /usr/local/bin/srs
+    rm -rf /tmp/srs-src
 fi
 log "SRS installed"
 
