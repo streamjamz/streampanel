@@ -177,9 +177,24 @@ class PlayoutWorker:
             assets = await get_playlist_assets(block.playlist_id)
             if not assets:
                 return False
-            self._playlist_queue = assets
+            # Find which asset should be playing at the given offset
+            remaining = offset
+            start_index = 0
+            asset_offset = 0.0
+            for i, a in enumerate(assets):
+                dur = float(a.duration_secs) if a.duration_secs else 0.0
+                if remaining < dur:
+                    start_index = i
+                    asset_offset = remaining
+                    break
+                remaining -= dur
+            else:
+                # offset exceeds total playlist duration, start from beginning
+                start_index = 0
+                asset_offset = 0.0
+            self._playlist_queue = assets[start_index + 1:]
             self._playlist_block_id = block.id
-            await self.play_asset(self._playlist_queue.pop(0), 0, block.id)
+            await self.play_asset(assets[start_index], asset_offset, block.id)
             return True
         if not block.asset_id:
             return False
