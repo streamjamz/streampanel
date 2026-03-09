@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { Layout } from '../components/Layout'
 import { Spinner } from '../components/UI'
-import Hls from 'hls.js'
 
+// HLS player using hls.js via CDN
 function HlsPlayer({ hlsUrl, isRunning }: { hlsUrl: string, isRunning: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const hlsRef = useRef<any>(null)
@@ -41,6 +41,7 @@ function HlsPlayer({ hlsUrl, isRunning }: { hlsUrl: string, isRunning: boolean }
       }
     }
 
+    // Load hls.js if not already loaded
     if (!(window as any).Hls) {
       const script = document.createElement('script')
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js'
@@ -111,73 +112,6 @@ function CopyBox({ label, value }: { label: string, value: string }) {
   )
 }
 
-function UsageMeter({ label, current, max, unit, color }: { label: string, current: number, max: number, unit: string, color: string }) {
-  const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0
-  const barColor = pct > 80 ? '#ef4444' : pct > 60 ? '#f59e0b' : color
-  return (
-    <div style={{ flex: 1, minWidth: 160 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</span>
-        <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-2)' }}>
-          <span style={{ color: barColor, fontWeight: 700 }}>{current.toLocaleString()}</span>
-          <span style={{ color: 'var(--text-3)' }}> / {max.toLocaleString()} {unit}</span>
-        </span>
-      </div>
-      <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 99, transition: 'width 0.8s ease' }}/>
-      </div>
-      <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, textAlign: 'right' }}>{pct.toFixed(1)}%</div>
-    </div>
-  )
-}
-
-function UsageWidget() {
-  const [usage, setUsage] = useState<any>(null)
-
-  useEffect(() => {
-    const load = () => api.get('/usage').then(r => setUsage(r.data)).catch(() => {})
-    load()
-    const interval = setInterval(load, 10000) // refresh every 10s
-    return () => clearInterval(interval)
-  }, [])
-
-  if (!usage) return null
-
-  return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', padding: '20px 24px', marginBottom: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>Resource Usage</h2>
-        <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)', background: 'var(--bg-raised)', padding: '3px 8px', borderRadius: 4, border: '1px solid var(--border)', textTransform: 'uppercase' }}>
-          {usage.plan}
-        </span>
-      </div>
-      <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        <UsageMeter
-          label="Connections"
-          current={usage.connections.current}
-          max={usage.connections.max}
-          unit=""
-          color="#3b9eff"
-        />
-        <UsageMeter
-          label="Bitrate"
-          current={usage.bitrate_kbps.current}
-          max={usage.bitrate_kbps.max}
-          unit="Kbps"
-          color="#a855f7"
-        />
-        <UsageMeter
-          label="Disk"
-          current={Math.round(usage.disk_mb.current)}
-          max={usage.disk_mb.max}
-          unit="MB"
-          color="#22c55e"
-        />
-      </div>
-    </div>
-  )
-}
-
 function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
   const [ingest, setIngest] = useState<any>(null)
   const [playback, setPlayback] = useState<any>(null)
@@ -195,6 +129,8 @@ function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
 
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', overflow: 'hidden' }}>
+
+      {/* Header */}
       <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 38, height: 38, borderRadius: 9, background: isLive ? 'rgba(59,158,255,0.15)' : 'rgba(168,85,247,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>
@@ -218,9 +154,14 @@ function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
         </div>
       </div>
 
+      {/* Body — Player left, Info right */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 0 }}>
+
+        {/* Player */}
         <div style={{ padding: '20px 22px', borderRight: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Preview</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            Preview
+          </div>
           {playback ? (
             <HlsPlayer hlsUrl={playback.hls_url} isRunning={isRunning}/>
           ) : (
@@ -230,7 +171,9 @@ function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
           )}
         </div>
 
+        {/* Info panel */}
         <div style={{ padding: '20px 22px' }}>
+          {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3 }}>
             {(['stream', 'playback'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em',
@@ -276,6 +219,8 @@ function ChannelCard({ ch, tenantSlug }: { ch: any, tenantSlug: string }) {
               </div>
             </>
           )}
+
+
         </div>
       </div>
     </div>
@@ -299,8 +244,6 @@ export default function TenantDashboard() {
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4, letterSpacing: '-0.02em' }}>My Channels</h1>
           <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Your streaming setup and live preview</p>
         </div>
-
-        <UsageWidget />
 
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spinner size={32}/></div>
