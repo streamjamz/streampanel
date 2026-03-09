@@ -68,10 +68,11 @@ async def _get_srs_bitrate(stream_keys: list[str]) -> int:
     bitrate_kbps = 0
     try:
         async with httpx.AsyncClient(timeout=2.0) as c:
-            r = await c.get("http://127.0.0.1:1985/api/v1/streams")
+            r = await c.get("http://127.0.0.1:1985/api/v1/streams/")
             if r.status_code == 200:
                 for s in r.json().get("streams", []):
-                    if s.get("name") in stream_keys:
+                    sname = s.get("name", "")
+                    if any(sname == key or sname.startswith(key) for key in stream_keys):
                         bitrate_kbps += s.get("kbps", {}).get("recv_30s", 0)
     except Exception:
         pass
