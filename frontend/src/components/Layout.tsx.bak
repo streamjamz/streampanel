@@ -29,9 +29,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       { href:`/channels/${firstChannelId}/schedule`, icon:'📅', label:'Schedule' },
     ] : []),
     ...(isSuperAdmin ? [
-      { href:'/playlists',        icon:'♫', label:'Playlists' },
-      { href:'/tenants',          icon:'🏢', label:'Tenants' },
-      { href:'/system-settings',  icon:'🌐', label:'System Settings' },
+      { href:'/playlists', icon:'♫', label:'Playlists' },
+      { href:'/tenants',   icon:'🏢', label:'Tenants' },
     ] : []),
     { href:'/admin', icon:'⊙', label:'Admin' },
   ]

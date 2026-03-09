@@ -154,7 +154,7 @@ async def get_playback(channel_id: uuid.UUID, db: AsyncSession = Depends(get_db)
     
     return {
         "webrtc_url": srs_manager.webrtc_play_url(ch.stream_key),
-        "hls_url": srs_manager.hls_play_url(ch.stream_key, ch.channel_type),
+        "hls_url": await srs_manager.hls_play_url_with_cdn(ch.stream_key, ch.channel_type),
     }
 
 
@@ -366,7 +366,7 @@ async def public_tenant(tenant_slug: str, db: AsyncSession = Depends(get_db)):
                 "slug": c.slug,
                 "channel_type": c.channel_type,
                 "state": c.state,
-                "hls_url": srs_manager.hls_play_url(c.stream_key, c.channel_type),
+                "hls_url": await srs_manager.hls_play_url_with_cdn(c.stream_key, c.channel_type),
             }
             for c in channels
         ]
@@ -436,7 +436,7 @@ async def public_channel(tenant_slug: str, channel_slug: str, db: AsyncSession =
             "slug": ch.slug,
             "channel_type": ch.channel_type,
             "state": ch.state,
-            "hls_url": srs_manager.hls_play_url(ch.stream_key, ch.channel_type),
+            "hls_url": await srs_manager.hls_play_url_with_cdn(ch.stream_key, ch.channel_type),
             "webrtc_url": srs_manager.webrtc_play_url(ch.stream_key),
             "upcoming_schedule": upcoming,
             "description": ch.description
