@@ -75,6 +75,7 @@ log "SRS installed"
 
 # ── Users & directories ───────────────────────────────────────
 id -u panel &>/dev/null || useradd -r -s /bin/false -d /var/lib/panel panel
+usermod -aG adm panel
 mkdir -p /var/lib/panel/{api,frontend,media}
 mkdir -p /var/log/panel
 mkdir -p /var/log/srs
@@ -245,7 +246,7 @@ vhost __defaultVhost__ {
         enabled         on;
         hls_path        /var/lib/srs/hls;
         hls_fragment    2;
-        hls_window      10;
+        hls_window      30;
         hls_cleanup     on;
         hls_wait_keyframe on;
         hls_m3u8_file   [app]/[stream].m3u8;
@@ -394,7 +395,9 @@ server {
         proxy_pass http://127.0.0.1:8080/live/;
         proxy_set_header Host \$host;
         add_header Cache-Control no-cache;
-        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Origin "*" always;
+        add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "*" always;
     }
 
     location /rtc/ {

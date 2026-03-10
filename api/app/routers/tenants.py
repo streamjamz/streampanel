@@ -74,7 +74,7 @@ async def _create_channels_for_plan(db: AsyncSession, tenant_id: uuid.UUID, plan
             id=uuid.uuid4(),
             tenant_id=tenant_id,
             name=ch_name,
-            slug=f"{ch_type}-{secrets.token_hex(6)}",
+            slug=f"{ch_type}-{re.sub(r'[^a-z0-9]+', '-', tenant_name.lower()).strip('-')[:20]}",
             channel_type=ch_type,
             stream_key=secrets.token_urlsafe(24),
             state="OFFLINE",
