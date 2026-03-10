@@ -1,0 +1,21 @@
+[Unit]
+Description=Panel Playout Worker for channel %i
+After=srs.service panel-api.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+# Service settings
+Type=simple
+User=panel
+Group=panel
+EnvironmentFile=/etc/panel/panel.env
+WorkingDirectory=/var/lib/panel/api
+ExecStart=/var/lib/panel/venv/bin/python -m app.workers.playout_worker %i
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/panel/playout-%i.log
+StandardError=append:/var/log/panel/playout-%i-error.log
+
+[Install]
+WantedBy=multi-user.target
