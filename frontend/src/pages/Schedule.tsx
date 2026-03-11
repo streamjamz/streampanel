@@ -229,7 +229,7 @@ export default function Schedule() {
             <div>
               <span style={{ fontSize:12, color:'var(--green)', fontWeight:600 }}>NOW PLAYING</span>
               <span style={{ fontSize:13, color:'var(--text)', marginLeft:12 }}>{nowPlaying.block_type==='playlist'?'♫ Playlist':nowPlaying.asset_id}</span>
-              <span style={{ fontSize:12, color:'var(--text-2)', marginLeft:8, fontFamily:'var(--mono)' }}>+{Math.floor(nowPlaying.offset_secs)}s</span>
+              <span style={{ fontSize:12, color:'var(--text-2)', marginLeft:8, fontFamily:'var(--mono)' }}>+{Math.floor(nowPlaying.offset_secs / 60)}m {Math.floor(nowPlaying.offset_secs % 60)}s</span>
             </div>
           </div>
         )}
