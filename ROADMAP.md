@@ -5,7 +5,7 @@
 
 ## Planned Features — Priority Order
 
-### Priority 0 — Manual Stop / READY State (Critical Fix)
+### ~~Priority 0 — Manual Stop / READY State~~ ✅ DONE
 Fix stop behavior so channel enters a READY state instead of going fully OFFLINE.
 - Stop kills current FFmpeg and clears the active schedule block
 - Channel state set to READY — worker stays alive watching the clock
@@ -15,7 +15,7 @@ Fix stop behavior so channel enters a READY state instead of going fully OFFLINE
 - Only go fully OFFLINE if tenant explicitly wants to shut down completely
 - Add READY state to channel model and UI indicator
 
-### Priority 1 — External Source Scheduling
+### ~~Priority 1 — External Source Scheduling~~ ✅ DONE
 Schedule external RTMP/HLS feeds as first-class schedule items alongside assets and playlists.
 - Add `source_type` to schedule entries: `asset`, `playlist`, `rtmp`, `hls`
 - Add `source_url` field for external feeds
@@ -55,6 +55,8 @@ Track cumulative bandwidth consumed per tenant per month.
 - Show Traffic (GB) usage meter on tenant dashboard alongside existing stats
 
 ## Completed
+- ✅ Priority 0 — Manual Stop / READY state (worker stays alive, deletes active block, clears cursor)
+- ✅ Priority 1 — External RTMP/HLS scheduling with duration picker and schedule change detection
 - Password reset UI for admin panel
 - CDN integration with auto fallback to local HLS
 - Tenant usage widget (connections, bitrate, disk)
