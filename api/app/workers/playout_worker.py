@@ -119,6 +119,12 @@ class PlayoutWorker:
 
     async def _save_cursor(self, block_id, position_secs: float):
         async with AsyncSessionLocal() as db:
+            # Verify block exists before saving to avoid FK violation
+            if block_id is not None:
+                from app.models.schedule import ScheduleBlock
+                block_exists = await db.scalar(select(ScheduleBlock).where(ScheduleBlock.id == block_id))
+                if not block_exists:
+                    block_id = None
             result = await db.execute(select(PlayoutCursor).where(PlayoutCursor.channel_id == CHANNEL_ID))
             cursor = result.scalar_one_or_none()
             if cursor:
