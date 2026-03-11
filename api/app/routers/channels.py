@@ -210,11 +210,12 @@ async def playout_stop(
     if not ch or (ch.tenant_id != user.tenant_id and user.role != "super_admin"):
         raise HTTPException(404)
     await redis.publish(f"playout:{channel_id}:cmd", "STOP")
-    subprocess.run(
-        ["sudo", "systemctl", "stop", f"panel-playout@{channel_id}.service"],
-        capture_output=True,
-    )
-    ch.state = "OFFLINE"
+    ch.state = "READY"
+    # Delete the currently playing schedule block
+    from app.services.schedule_service import get_current_block
+    block, _ = await get_current_block(db, str(channel_id))
+    if block:
+        await db.delete(block)
     await db.commit()
     return {"status": "stopping"}
 

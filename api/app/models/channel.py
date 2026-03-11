@@ -17,7 +17,7 @@ class Channel(Base):
     # channel_type: live | tv
     stream_key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     state: Mapped[str] = mapped_column(String(30), default="OFFLINE")
-    # states: OFFLINE | LIVE_ONLY | TV_VOD_RUNNING | TV_LIVE_RUNNING
+    # states: OFFLINE | READY | LIVE_ONLY | TV_VOD_RUNNING | TV_LIVE_RUNNING
     #         TV_LIVE_REQUESTED | TV_VOD_RETURNING
     auto_return_to_vod: Mapped[bool] = mapped_column(Boolean, default=True)
     live_timeout_seconds: Mapped[int] = mapped_column(Integer, default=10)

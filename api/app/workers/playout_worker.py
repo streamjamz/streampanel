@@ -155,9 +155,9 @@ class PlayoutWorker:
     async def _set_idle(self):
         self.kill_ffmpeg()
         self.idle = True
-        logger.info(f"[{CHANNEL_ID}] No content -- going idle")
+        logger.info(f"[{CHANNEL_ID}] No content -- going READY")
         async with AsyncSessionLocal() as db:
-            await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="OFFLINE"))
+            await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="READY"))
             await db.commit()
 
     async def play_asset(self, asset, offset: float, block_id=None):
@@ -214,7 +214,7 @@ class PlayoutWorker:
 
     async def handle_redis_commands(self, redis: aioredis.Redis):
         pubsub = redis.pubsub()
-        await pubsub.subscribe(f"playout:{CHANNEL_ID}")
+        await pubsub.subscribe(f"playout:{CHANNEL_ID}:cmd")
         async for msg in pubsub.listen():
             if msg["type"] != "message":
                 continue
@@ -233,7 +233,15 @@ class PlayoutWorker:
                 self._playlist_queue = []
             elif cmd == "STOP":
                 self.kill_ffmpeg()
-                sys.exit(0)
+                self._playlist_queue = []
+                self._playlist_block_id = None
+                self.paused = False
+                self.idle = True
+                await self._save_cursor(None, 0.0)
+                async with AsyncSessionLocal() as db:
+                    await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="READY"))
+                    await db.commit()
+                logger.info(f"[{CHANNEL_ID}] Stopped -- entering READY state")
 
     async def run(self):
         global SRS_RTMP

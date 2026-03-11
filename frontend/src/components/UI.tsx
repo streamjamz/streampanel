@@ -49,6 +49,7 @@ export function StateTag({ state }: { state: string }) {
     TV_LIVE_REQUESTED: { label:'TAKE LIVE…', color:'var(--amber)', bg:'var(--amber-dim)', dot:true },
     TV_VOD_RETURNING:  { label:'RETURNING',  color:'var(--blue)',  bg:'var(--blue-dim)',  dot:false },
     OFFLINE:           { label:'OFFLINE',    color:'var(--text-3)',bg:'transparent',      dot:false },
+    READY:             { label:'READY',      color:'#f59e0b',bg:'rgba(245,158,11,0.1)', dot:false },
   }
   const t = map[state] ?? map['OFFLINE']
   return (
