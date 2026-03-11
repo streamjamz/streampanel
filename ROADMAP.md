@@ -62,3 +62,13 @@ Track cumulative bandwidth consumed per tenant per month.
 - Tenant usage widget (connections, bitrate, disk)
 - Real-time viewer count from nginx log parsing
 - External source scheduling groundwork (filler/fallback concept defined)
+
+### Priority 6 — VDO.Ninja Studio Talkback / Guest Integration
+- Self-host VDO.Ninja on vod.sjamz.com alongside StreamPanel
+- Each channel gets an auto-generated VDO.Ninja room
+- Channel manager gets a Director link, guests get a shareable invite link
+- No app needed for guests — browser only, works on mobile
+- Director controls who is heard/seen on air
+- Room output pushes as RTMP into SRS — schedulable as any RTMP block
+- Multiple guests supported natively
+- Status: 📋 Planned
