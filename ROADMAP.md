@@ -5,6 +5,16 @@
 
 ## Planned Features — Priority Order
 
+### Priority 0 — Manual Stop / READY State (Critical Fix)
+Fix stop behavior so channel enters a READY state instead of going fully OFFLINE.
+- Stop kills current FFmpeg and clears the active schedule block
+- Channel state set to READY — worker stays alive watching the clock
+- Next scheduled item auto-starts without manual intervention
+- Live cut-in still works in READY state
+- Filler source plays in READY state if configured (no dead air)
+- Only go fully OFFLINE if tenant explicitly wants to shut down completely
+- Add READY state to channel model and UI indicator
+
 ### Priority 1 — External Source Scheduling
 Schedule external RTMP/HLS feeds as first-class schedule items alongside assets and playlists.
 - Add `source_type` to schedule entries: `asset`, `playlist`, `rtmp`, `hls`
