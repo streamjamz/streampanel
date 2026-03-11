@@ -1,0 +1,25 @@
+[Unit]
+Description=Panel FastAPI Backend
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=panel
+Group=panel
+EnvironmentFile=/etc/panel/panel.env
+WorkingDirectory=/var/lib/panel/api
+ExecStart=/var/lib/panel/venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --workers 33 \
+    --log-level warning
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+StandardOutput=append:/var/log/panel/api.log
+StandardError=append:/var/log/panel/api-error.log
+
+[Install]
+WantedBy=multi-user.target
