@@ -216,6 +216,13 @@ async def playout_stop(
     block, _ = await get_current_block(db, str(channel_id))
     if block:
         await db.delete(block)
+        # Clear cursor to avoid FK violation on deleted block
+        from app.models.playout_cursor import PlayoutCursor
+        from sqlalchemy import select as sa_select
+        cursor_result = await db.execute(sa_select(PlayoutCursor).where(PlayoutCursor.channel_id == channel_id))
+        cursor = cursor_result.scalar_one_or_none()
+        if cursor:
+            cursor.current_block_id = None
     await db.commit()
     return {"status": "stopping"}
 

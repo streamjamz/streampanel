@@ -15,7 +15,8 @@ class ScheduleBlock(Base):
     asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("assets.id", ondelete="SET NULL"), nullable=True)
     playlist_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("playlists.id", ondelete="SET NULL"), nullable=True)
     block_type: Mapped[str] = mapped_column(String(20), default="asset")
-    # block_type: asset | playlist | live_event | filler_loop
+    # block_type: asset | playlist | live_event | filler_loop | rtmp | hls
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     duration_secs: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
     day_mask: Mapped[int] = mapped_column(SmallInteger, default=127)

@@ -41,6 +41,7 @@ def _block_dict(block: ScheduleBlock) -> dict:
         "notes": block.notes,
         "asset_name": block.asset.original_name if block.asset else None,
         "playlist_name": block.playlist.name if block.playlist else None,
+        "source_url": block.source_url if block.source_url else None,
     }
 
 
@@ -54,6 +55,7 @@ class BlockCreate(BaseModel):
     day_mask: int = 127
     priority: int = 0
     notes: Optional[str] = None
+    source_url: Optional[str] = None
 
 
 @router.get("/channel/{channel_id}")
@@ -101,6 +103,10 @@ async def create_block(
         if asset and asset.duration_secs:
             duration = float(asset.duration_secs)
 
+    # Default duration for rtmp/hls blocks is 1 hour if not specified
+    if body.block_type in ("rtmp", "hls") and not duration:
+        duration = 3600.0
+
     block = ScheduleBlock(
         id=uuid.uuid4(),
         channel_id=channel_id,
@@ -112,6 +118,7 @@ async def create_block(
         day_mask=body.day_mask,
         priority=body.priority,
         notes=body.notes,
+        source_url=body.source_url,
     )
     db.add(block)
     await db.commit()

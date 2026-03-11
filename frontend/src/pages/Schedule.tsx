@@ -115,10 +115,11 @@ export default function Schedule() {
   const [nowPlaying, setNowPlaying] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [blockType, setBlockType] = useState<'asset' | 'playlist'>('asset')
-  const [form, setForm] = useState({ start_time: '', asset_id: '', playlist_id: '', day_mask: 127 })
+  const [blockType, setBlockType] = useState<'asset' | 'playlist' | 'rtmp' | 'hls'>('asset')
+  const [sourceUrl, setSourceUrl] = useState('')
+  const [form, setForm] = useState({ start_time: '', asset_id: '', playlist_id: '', day_mask: 127, duration_secs: '3600' })
   const [editBlock, setEditBlock] = useState<any>(null)
-  const [editForm, setEditForm] = useState({ start_time: '', day_mask: 127 })
+  const [editForm, setEditForm] = useState({ start_time: '', day_mask: 127, source_url: '' })
   const [toast, setToast] = useState<any>(null)
   const GENRES = ['R&B','Dancehall','Soul','Rock','Pop','Reggae','Hip-Hop','Ads']
   const [playlistGenreFilter, setPlaylistGenreFilter] = useState<string | null>(null)
@@ -146,9 +147,10 @@ export default function Schedule() {
     const payload: any = { channel_id: channelId, start_time: form.start_time, day_mask: form.day_mask, block_type: blockType }
     if (blockType === 'asset') payload.asset_id = form.asset_id
     if (blockType === 'playlist') payload.playlist_id = form.playlist_id
+    if (blockType === 'rtmp' || blockType === 'hls') { payload.source_url = sourceUrl; payload.duration_secs = parseFloat(form.duration_secs) || 3600 }
     try {
       await api.post(`/schedule/channel/${channelId}`, payload)
-      setShowAdd(false); showToast('Block added'); load()
+      setShowAdd(false); setSourceUrl(''); showToast('Block added'); load()
     } catch (e: any) { showToast(e.response?.data?.detail ?? 'Error', 'error') }
   }
 
@@ -181,7 +183,7 @@ export default function Schedule() {
 
   const openEdit = (b: any) => {
     setEditBlock(b)
-    setEditForm({ start_time: b.start_time, day_mask: b.day_mask })
+    setEditForm({ start_time: b.start_time, day_mask: b.day_mask, source_url: b.source_url || '' })
   }
 
   const saveEdit = async (e: React.FormEvent) => {
@@ -201,6 +203,8 @@ export default function Schedule() {
 
   const blockLabel = (b: any) => {
     if (b.block_type === 'playlist') return `♫ ${b.playlist_name || b.playlist_id}`
+  if (b.block_type === 'rtmp') return `📡 RTMP: ${b.source_url || ''}` 
+  if (b.block_type === 'hls') return `▶ HLS: ${b.source_url || ''}`
     return b.asset_name || b.asset_id
   }
 
@@ -228,7 +232,7 @@ export default function Schedule() {
             <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', animation:'pulse 1.4s ease-in-out infinite', flexShrink:0 }}/>
             <div>
               <span style={{ fontSize:12, color:'var(--green)', fontWeight:600 }}>NOW PLAYING</span>
-              <span style={{ fontSize:13, color:'var(--text)', marginLeft:12 }}>{nowPlaying.block_type==='playlist'?'♫ Playlist':nowPlaying.asset_id}</span>
+              <span style={{ fontSize:13, color:'var(--text)', marginLeft:12 }}>{nowPlaying.block_type==='playlist'?'♫ Playlist':nowPlaying.block_type==='rtmp'?'📡 RTMP':nowPlaying.block_type==='hls'?'▶ HLS':nowPlaying.asset_id}</span>
               <span style={{ fontSize:12, color:'var(--text-2)', marginLeft:8, fontFamily:'var(--mono)' }}>+{Math.floor(nowPlaying.offset_secs / 60)}m {Math.floor(nowPlaying.offset_secs % 60)}s</span>
             </div>
           </div>
@@ -301,14 +305,45 @@ export default function Schedule() {
         <Modal title="Add Schedule Block" onClose={() => setShowAdd(false)}>
           <form onSubmit={addBlock} style={{ display:'flex', flexDirection:'column', gap:14 }}>
             <div style={{ display:'flex', gap:1, background:'var(--border)', borderRadius:'var(--r)', padding:3 }}>
-              {(['asset','playlist'] as const).map(t => (
+              {(['asset','playlist','rtmp','hls'] as const).map(t => (
                 <button key={t} type="button" onClick={() => setBlockType(t)}
                   style={{ flex:1, padding:'6px 0', borderRadius:6, border:'none', cursor:'pointer', fontSize:13, fontWeight:blockType===t?600:400, background:blockType===t?'var(--bg-raised)':'transparent', color:blockType===t?'var(--text)':'var(--text-2)', fontFamily:'var(--sans)', transition:'all 0.12s' }}
-                >{t==='playlist'?'♫ Playlist':'🎬 Asset'}</button>
+                >{t==='playlist'?'♫ Playlist':t==='rtmp'?'📡 RTMP':t==='hls'?'▶ HLS':'🎬 Asset'}</button>
               ))}
             </div>
             <TimeInput value={form.start_time} onChange={(v:string)=>setForm({...form,start_time:v})}/>
-            {blockType==='asset' ? (
+            {(blockType==='rtmp' || blockType==='hls') ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>
+                    {blockType.toUpperCase()} URL
+                  </label>
+                  <input
+                    value={sourceUrl}
+                    onChange={(e:any) => setSourceUrl(e.target.value)}
+                    placeholder={blockType === 'rtmp' ? 'rtmp://server/live/stream-key' : 'https://example.com/stream.m3u8'}
+                    required
+                    style={{ width:'100%', background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'9px 12px', fontSize:13, color:'var(--text)', boxSizing:'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Duration</label>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+                    {[['5m','300'],['15m','900'],['30m','1800'],['1hr','3600'],['2hr','7200'],['4hr','14400']].map(([label, val]) => (
+                      <button key={val} type="button" onClick={() => setForm({...form, duration_secs: val})}
+                        style={{ padding:'5px 12px', borderRadius:6, border:`1px solid ${form.duration_secs===val?'var(--amber)':'var(--border)'}`, background:form.duration_secs===val?'var(--amber-dim)':'transparent', color:form.duration_secs===val?'var(--amber)':'var(--text-2)', fontSize:12, cursor:'pointer', fontWeight:form.asset_id===val?700:400 }}>
+                        {label}
+                      </button>
+                    ))}
+                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                      <input type="number" min="1" placeholder="min" onChange={(e:any) => setForm({...form, duration_secs: String(parseInt(e.target.value||'0')*60)})}
+                        style={{ width:60, background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:6, padding:'5px 8px', fontSize:12, color:'var(--text)', textAlign:'center' }}/>
+                      <span style={{ fontSize:11, color:'var(--text-3)' }}>min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : blockType==='asset' ? (
               <Select label="Asset" value={form.asset_id} onChange={(e:any)=>setForm({...form,asset_id:e.target.value})} required>
                 <option value="">Select asset…</option>
                 {assets.filter(a=>a.status==='ready').map(a=><option key={a.id} value={a.id}>{a.original_name}</option>)}
@@ -348,6 +383,19 @@ export default function Schedule() {
             </div>
             <TimeInput value={editForm.start_time} onChange={(v:string)=>setEditForm({...editForm,start_time:v})}/>
             <DayPicker value={editForm.day_mask} onChange={(v:number)=>setEditForm({...editForm,day_mask:v})}/>
+            {(editBlock?.block_type === 'rtmp' || editBlock?.block_type === 'hls') && (
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>
+                  {editBlock.block_type.toUpperCase()} URL
+                </label>
+                <input
+                  value={editForm.source_url}
+                  onChange={(e:any) => setEditForm({...editForm, source_url: e.target.value})}
+                  placeholder={editBlock.block_type === 'rtmp' ? 'rtmp://server/live/stream-key' : 'https://example.com/stream.m3u8'}
+                  style={{ width:'100%', background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'9px 12px', fontSize:13, color:'var(--text)', boxSizing:'border-box' }}
+                />
+              </div>
+            )}
             <div style={{ display:'flex', gap:8, justifyContent:'flex-end', paddingTop:8 }}>
               <Btn variant="outline" type="button" onClick={() => setEditBlock(null)}>Cancel</Btn>
               <Btn type="submit">Save Changes</Btn>

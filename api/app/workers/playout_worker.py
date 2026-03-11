@@ -56,6 +56,29 @@ LOGO_POSITIONS = {
     "center":       "x=(W-w)/2:y=(H-h)/2",
 }
 
+def build_ffmpeg_cmd_external(source_url: str, logo_path: str | None, logo_pos: str) -> list[str]:
+    """FFmpeg command for pulling an external RTMP or HLS source."""
+    overlay_expr = LOGO_POSITIONS.get(logo_pos, "x=W-w-10:y=10")
+    use_logo = logo_path and Path(logo_path).exists()
+    cmd = [
+        "ffmpeg", "-hide_banner", "-loglevel", "warning",
+        "-re", "-i", source_url,
+    ]
+    if use_logo:
+        cmd += ["-i", logo_path,
+                "-filter_complex", f"[0:v]scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2[scaled];[scaled][1:v]overlay={overlay_expr}"]
+    else:
+        cmd += ["-vf", "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"]
+    cmd += [
+        "-c:v", "libx264", "-preset", "veryfast",
+        "-b:v", "4000k", "-maxrate", "4500k", "-bufsize", "8000k",
+        "-g", "60", "-keyint_min", "60", "-sc_threshold", "0",
+        "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
+        "-f", "flv", SRS_RTMP,
+    ]
+    return cmd
+
+
 def build_ffmpeg_cmd(asset_path: str, start_offset: float,
                      logo_path: str | None, logo_pos: str) -> list[str]:
     overlay_expr = LOGO_POSITIONS.get(logo_pos, "x=W-w-10:y=10")
@@ -107,6 +130,8 @@ class PlayoutWorker:
         self._current_offset: float = 0.0
         self._playlist_queue: list = []
         self._playlist_block_id = None
+        self._current_block_type: str = 'asset'
+        self._current_block_id: str | None = None
 
     def kill_ffmpeg(self):
         if self.current_proc and self.current_proc.poll() is None:
@@ -168,6 +193,8 @@ class PlayoutWorker:
         logger.info(f"[{CHANNEL_ID}] Playing: {asset.original_name} offset={offset:.1f}s")
         self._proc_start_ts = datetime.now(timezone.utc).timestamp()
         self._current_offset = offset
+        self._current_block_type = 'asset'
+        self._current_block_id = str(block_id) if block_id else None
         self.idle = False
         async with AsyncSessionLocal() as db:
             await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="TV_VOD_RUNNING"))
@@ -179,6 +206,23 @@ class PlayoutWorker:
     async def play_block(self, block, offset: float) -> bool:
         if not block or block.block_type == "filler_loop":
             return False
+        if block.block_type in ("rtmp", "hls") and block.source_url:
+            ch = await self._get_channel()
+            logo = ch.logo_path if ch else None
+            pos = (ch.logo_position or "top-right") if ch else "top-right"
+            cmd = build_ffmpeg_cmd_external(block.source_url, logo, pos)
+            logger.info(f"[{CHANNEL_ID}] Playing external {block.block_type}: {block.source_url}")
+            self._proc_start_ts = datetime.now(timezone.utc).timestamp()
+            self._current_offset = 0
+            self._current_block_type = block.block_type
+            self._current_block_id = str(block.id)
+            self.idle = False
+            async with AsyncSessionLocal() as db:
+                await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="TV_VOD_RUNNING"))
+                await db.commit()
+            self.current_proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            await self._save_cursor(block.id, 0)
+            return True
         if block.block_type == "playlist" and block.playlist_id:
             assets = await get_playlist_assets(block.playlist_id)
             if not assets:
@@ -297,7 +341,24 @@ class PlayoutWorker:
                     continue
 
             if self.current_proc:
-                await asyncio.get_event_loop().run_in_executor(None, self.current_proc.wait)
+                # For external sources (rtmp/hls), poll for schedule changes every 5s
+                current_block_type = getattr(self, '_current_block_type', 'asset')
+                if current_block_type in ('rtmp', 'hls'):
+                    while self.current_proc and self.current_proc.poll() is None:
+                        await asyncio.sleep(5)
+                        # Check if a different block should now be playing
+                        new_block, new_offset = await get_current_block_for_channel()
+                        logger.info(f"[{CHANNEL_ID}] Poll: new_block={new_block.id if new_block else None} current={getattr(self, '_current_block_id', None)}")
+                        if new_block and str(new_block.id) != str(getattr(self, '_current_block_id', None)):
+                            logger.info(f"[{CHANNEL_ID}] Schedule change detected -- cutting RTMP/HLS")
+                            self.kill_ffmpeg()
+                            break
+                        elif not new_block:
+                            logger.info(f"[{CHANNEL_ID}] No block found -- cutting RTMP/HLS to READY")
+                            self.kill_ffmpeg()
+                            break
+                else:
+                    await asyncio.get_event_loop().run_in_executor(None, self.current_proc.wait)
                 if self.current_proc and self.current_proc.returncode not in (0, -15):
                     logger.warning(f"[{CHANNEL_ID}] FFmpeg exit {self.current_proc.returncode}")
             await asyncio.sleep(1)
