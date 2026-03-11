@@ -214,6 +214,8 @@ async def playout_stop(
         ["sudo", "systemctl", "stop", f"panel-playout@{channel_id}.service"],
         capture_output=True,
     )
+    ch.state = "OFFLINE"
+    await db.commit()
     return {"status": "stopping"}
 
 
