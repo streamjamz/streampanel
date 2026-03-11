@@ -72,3 +72,11 @@ Track cumulative bandwidth consumed per tenant per month.
 - Room output pushes as RTMP into SRS — schedulable as any RTMP block
 - Multiple guests supported natively
 - Status: 📋 Planned
+
+### Priority 2 — Auto Schedule Fill / Filler Source
+- Per-channel setting — tenants can enable or disable filler independently
+- Filler source options: playlist, RTMP URL, or HLS URL
+- When enabled: worker falls back to filler source when nothing is scheduled instead of going READY
+- When disabled: worker behaves as normal, goes READY when nothing is scheduled
+- Channel settings UI gets a Filler section with toggle + source picker
+- Status: 📋 Planned
