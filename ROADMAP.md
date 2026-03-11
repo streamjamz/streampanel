@@ -80,3 +80,17 @@ Track cumulative bandwidth consumed per tenant per month.
 - When disabled: worker behaves as normal, goes READY when nothing is scheduled
 - Channel settings UI gets a Filler section with toggle + source picker
 - Status: 📋 Planned
+
+### Priority 3 — Multi-Source Channel Inputs / DJ Takeover
+- Each contributor gets their own RTMP stream key on SRS
+- Contributor profiles: name, auto-generated stream key, role (DJ/Guest/Co-host), active/inactive toggle
+- Scheduler shows contributor name in block dropdown — no need to paste RTMP URLs
+- Optional recurring slot on contributor profile — e.g. "DJ Kontrol every Friday 8pm-10pm", auto-populates schedule weekly
+- Manual schedule blocks can override recurring slots
+- Only one contributor plays on air at a time, others can be connected and waiting
+- **Contributor limit per channel** — super-admin sets limit per channel (default: 3)
+- Tenant UI shows slots used vs available e.g. "2 of 3 contributors used"
+- Hitting limit shows upgrade prompt — clean upsell hook for tiered plans
+- Super-admin can increase limit per channel from admin panel on upgrade
+- Same tier-limit pattern can be extended to storage, channel count, scheduled blocks etc.
+- Status: 📋 Planned
