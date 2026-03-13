@@ -94,3 +94,21 @@ Track cumulative bandwidth consumed per tenant per month.
 - Super-admin can increase limit per channel from admin panel on upgrade
 - Same tier-limit pattern can be extended to storage, channel count, scheduled blocks etc.
 - Status: 📋 Planned
+
+## Development Notes
+
+### Priority 2 Status - ✅ UI Complete, Worker Integration Pending
+- Backend: filler settings API complete
+- Frontend: toggle, type selector, playlist/URL picker complete
+- **Next:** Integrate filler logic into playout_worker.py
+  - When schedule is empty and filler_enabled=true, play filler source
+  - When filler_enabled=false, go to READY state as normal
+
+### Priority 3 Status - ✅ UI Complete, SRS Integration Pending  
+- Backend: contributors table, API endpoints, stream key generation complete
+- Frontend: contributor management UI, limit enforcement, stream key display complete
+- **Next:** 
+  - Configure SRS to accept contributor stream keys
+  - Add contributor source type to schedule blocks
+  - Implement contributor switching in playout worker
+  - Add recurring schedule auto-population
