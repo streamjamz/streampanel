@@ -15,6 +15,7 @@ import logging
 
 from app.database import get_db
 from app.models.channel import Channel
+from app.models import User
 from app.core.deps import get_current_user, require_role
 from app.services.srs_manager import srs_manager
 from app.redis_client import get_redis
@@ -481,3 +482,83 @@ async def delete_offline_logo(channel_id: uuid.UUID, db: AsyncSession = Depends(
     ch.offline_logo_path = None
     await db.commit()
     return {"ok": True}
+
+# Priority 2: Filler source endpoints
+@router.patch("/{channel_id}/filler")
+async def update_filler_settings(
+    channel_id: uuid.UUID,
+    filler_enabled: bool = None,
+    filler_source_type: str = None,
+    filler_source_id: uuid.UUID = None,
+    filler_source_url: str = None,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Update filler source settings for a channel"""
+    ch = await db.get(Channel, channel_id)
+    if not ch or (ch.tenant_id != user.tenant_id and user.role != "super_admin"):
+        raise HTTPException(404, detail="Channel not found")
+    
+    # Update filler settings
+    if filler_enabled is not None:
+        ch.filler_enabled = filler_enabled
+    
+    if filler_source_type is not None:
+        if filler_source_type not in ["playlist", "rtmp", "hls", None]:
+            raise HTTPException(400, detail="Invalid filler_source_type")
+        ch.filler_source_type = filler_source_type
+    
+    if filler_source_id is not None:
+        ch.filler_source_id = filler_source_id
+    
+    if filler_source_url is not None:
+        ch.filler_source_url = filler_source_url
+    
+    await db.commit()
+    await db.refresh(ch)
+    
+    return {
+        "filler_enabled": ch.filler_enabled,
+        "filler_source_type": ch.filler_source_type,
+        "filler_source_id": str(ch.filler_source_id) if ch.filler_source_id else None,
+        "filler_source_url": ch.filler_source_url
+    }
+
+@router.get("/{channel_id}/filler")
+async def get_filler_settings(
+    channel_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get filler source settings for a channel"""
+    ch = await db.get(Channel, channel_id)
+    if not ch or (ch.tenant_id != user.tenant_id and user.role != "super_admin"):
+        raise HTTPException(404, detail="Channel not found")
+    
+    return {
+        "filler_enabled": ch.filler_enabled,
+        "filler_source_type": ch.filler_source_type,
+        "filler_source_id": str(ch.filler_source_id) if ch.filler_source_id else None,
+        "filler_source_url": ch.filler_source_url
+    }
+
+# Priority 3: Contributor limit endpoint (super-admin only)
+@router.patch("/{channel_id}/contributor-limit")
+async def update_contributor_limit(
+    channel_id: uuid.UUID,
+    limit: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("super_admin"))
+):
+    """Update contributor limit for a channel (super-admin only)"""
+    ch = await db.get(Channel, channel_id)
+    if not ch:
+        raise HTTPException(404, detail="Channel not found")
+    
+    if limit < 0:
+        raise HTTPException(400, detail="Limit must be non-negative")
+    
+    ch.contributor_limit = limit
+    await db.commit()
+    
+    return {"contributor_limit": ch.contributor_limit}

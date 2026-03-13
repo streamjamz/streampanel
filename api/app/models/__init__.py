@@ -7,9 +7,11 @@ from app.models.schedule import ScheduleBlock
 from app.models.playout_cursor import PlayoutCursor
 from app.models.refresh_token import RefreshToken
 from app.models.stream_target import StreamTarget
+from app.models.contributor import Contributor
 
 __all__ = [
     "Tenant", "User", "Channel", "Asset",
     "Playlist", "PlaylistItem",
     "ScheduleBlock", "PlayoutCursor", "RefreshToken", "StreamTarget",
+    "Contributor",
 ]
