@@ -43,24 +43,24 @@ class SRSManager:
     def webrtc_play_url(self, stream_key: str) -> str:
         return f"{settings.PANEL_BASE_URL}/rtc/v1/whep/?app=live&stream={stream_key}"
 
-    def hls_play_url(self, stream_key: str, channel_type: str = "tv") -> str:
+    def hls_play_url(self, stream_key: str, channel_type: str = "tv", channel_state: str = "OFFLINE") -> str:
         """Generate HLS playback URL based on channel type (sync fallback, no CDN check)."""
-        if channel_type == "live":
+        if channel_type == "live" or channel_state == "TV_LIVE_RUNNING":
             return f"{settings.PANEL_BASE_URL}/hls/live/{stream_key}.m3u8"
         else:
             return f"{settings.PANEL_BASE_URL}/hls/live/{stream_key}-int.m3u8"
 
-    async def hls_play_url_with_cdn(self, stream_key: str, channel_type: str = "tv") -> str:
+    async def hls_play_url_with_cdn(self, stream_key: str, channel_type: str = "tv", channel_state: str = "OFFLINE") -> str:
         """Generate HLS playback URL, using CDN if configured in system settings."""
         cdn_base = await _get_cdn_url()
         if cdn_base:
             # CDN enabled — point to CDN endpoint
-            if channel_type == "live":
+            if channel_type == "live" or channel_state == "TV_LIVE_RUNNING":
                 return f"{cdn_base}/live/{stream_key}.m3u8"
             else:
                 return f"{cdn_base}/live/{stream_key}-int.m3u8"
         # Fallback to local SRS
-        return self.hls_play_url(stream_key, channel_type)
+        return self.hls_play_url(stream_key, channel_type, channel_state)
 
 
 srs_manager = SRSManager()

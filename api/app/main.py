@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, tenants, users, channels, assets, schedule, health, hooks, playlists, stats, stream_targets, api_keys, v1, system_settings, usage
+from app.routers import auth, tenants, users, channels, assets, schedule, health, hooks, playlists, stats, stream_targets, api_keys, v1, system_settings, usage, usage
 from app.models.stream_target import StreamTarget  # noqa: F401 - registers model with SQLAlchemy
 from app.models.api_key import ApiKey  # noqa: F401 - registers model with SQLAlchemy
 
@@ -53,6 +53,7 @@ app.include_router(stream_targets.router, prefix="/api/targets",   tags=["target
 app.include_router(api_keys.router,       prefix="/api/keys",      tags=["api-keys"])
 app.include_router(v1.router,             prefix="/api/v1",        tags=["v1"])
 app.include_router(system_settings.router, prefix="/api/system-settings", tags=["system-settings"])
+app.include_router(usage.router, prefix="/api/usage", tags=["usage"])
 app.include_router(usage.router, prefix="/api/usage", tags=["usage"])
 # # app.include_router(settings.router,       prefix="/api/settings", tags=["settings"])
 

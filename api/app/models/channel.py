@@ -30,6 +30,7 @@ class Channel(Base):
     playout_pid: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_live_seen: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     offline_message: Mapped[str | None] = mapped_column(Text, nullable=True)

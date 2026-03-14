@@ -80,7 +80,7 @@ async def srs_on_publish(
         redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         
         # Send PAUSE command - worker expects this format
-        await redis.publish(f"playout:{ch.id}", "PAUSE")
+        await redis.publish(f"playout:{ch.id}:cmd", "PAUSE")
         
         # Also set OBS_CONNECTED flag
         await redis.set(f"channel:{ch.id}:OBS_CONNECTED", "1", ex=30)
@@ -122,7 +122,7 @@ async def srs_on_unpublish(
         redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         
         # Send RESUME_AS_CLOCK command - worker expects this format
-        await redis.publish(f"playout:{ch.id}", "RESUME_AS_CLOCK")
+        await redis.publish(f"playout:{ch.id}:cmd", "RESUME_AS_CLOCK")
         
         # Clear OBS_CONNECTED flag
         await redis.delete(f"channel:{ch.id}:OBS_CONNECTED")

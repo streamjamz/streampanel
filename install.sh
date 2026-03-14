@@ -76,6 +76,7 @@ log "SRS installed"
 # ── Users & directories ───────────────────────────────────────
 id -u panel &>/dev/null || useradd -r -s /bin/false -d /var/lib/panel panel
 usermod -aG adm panel
+usermod -aG adm panel
 mkdir -p /var/lib/panel/{api,frontend,media}
 mkdir -p /var/log/panel
 mkdir -p /var/log/srs
@@ -91,28 +92,6 @@ log "Directories created"
 systemctl start postgresql
 systemctl enable postgresql
 
-# Tune PostgreSQL based on available RAM
-TOTAL_RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-SHARED_BUFFERS_GB=$(( TOTAL_RAM_KB / 1024 / 1024 / 4 ))
-EFFECTIVE_CACHE_GB=$(( TOTAL_RAM_KB / 1024 / 1024 * 3 / 4 ))
-[ "$SHARED_BUFFERS_GB" -lt 1 ] && SHARED_BUFFERS_GB=1
-PGCONF=$(find /etc/postgresql -name postgresql.conf | head -1)
-if [ -n "$PGCONF" ]; then
-    cat >> "$PGCONF" << PGEOF
-
-# StreamPanel performance tuning
-shared_buffers = ${SHARED_BUFFERS_GB}GB
-work_mem = 64MB
-max_connections = 200
-effective_cache_size = ${EFFECTIVE_CACHE_GB}GB
-maintenance_work_mem = 2GB
-checkpoint_completion_target = 0.9
-wal_buffers = 64MB
-PGEOF
-    systemctl restart postgresql
-    log "PostgreSQL tuned: shared_buffers=${SHARED_BUFFERS_GB}GB"
-fi
-
 sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1 || \
     sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
 sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1 || \
@@ -122,9 +101,6 @@ log "PostgreSQL configured"
 # ── Redis ─────────────────────────────────────────────────────
 systemctl start redis-server
 systemctl enable redis-server
-redis-cli CONFIG SET appendonly yes
-redis-cli CONFIG REWRITE
-log "Redis AOF persistence enabled"
 log "Redis ready"
 
 # ── Clone repo ────────────────────────────────────────────────
@@ -304,7 +280,7 @@ WorkingDirectory=/var/lib/panel/api
 ExecStart=/var/lib/panel/venv/bin/uvicorn app.main:app \
     --host 127.0.0.1 \
     --port 8000 \
-    --workers $(( $(nproc) * 2 + 1 )) \
+    --workers 4 \
     --log-level warning
 Restart=always
 RestartSec=5

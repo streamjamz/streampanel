@@ -6,10 +6,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
 
-
 class Asset(Base):
     __tablename__ = "assets"
-
+    
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"))
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -26,6 +25,6 @@ class Asset(Base):
     status: Mapped[str] = mapped_column(String(20), default="processing")
     # status: processing | ready | error
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-
     genres: Mapped[list] = mapped_column(ARRAY(String), nullable=True, default=list)
+    
     tenant = relationship("Tenant", back_populates="assets")
