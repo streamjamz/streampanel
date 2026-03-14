@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import ChannelDetail from './pages/ChannelDetail'
 import Assets from './pages/Assets'
 import Schedule from './pages/Schedule'
+import Contributors from './pages/Contributors'
 import Playlists from './pages/Playlists'
 import PlaylistDetail from './pages/PlaylistDetail'
 import Admin from './pages/Admin'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/channels/:id" element={<PrivateRoute><ChannelDetail /></PrivateRoute>} />
         <Route path="/channels/:id/assets" element={<PrivateRoute><Assets /></PrivateRoute>} />
         <Route path="/channels/:id/schedule" element={<PrivateRoute><Schedule /></PrivateRoute>} />
+        <Route path="/channels/:id/contributors" element={<PrivateRoute><Contributors /></PrivateRoute>} />
         <Route path="/playlists" element={<PrivateRoute><Playlists /></PrivateRoute>} />
         <Route path="/playlists/:id" element={<PrivateRoute><PlaylistDetail /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />

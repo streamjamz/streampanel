@@ -1,4 +1,5 @@
 import uuid
+from app.models.contributor import Contributor  # noqa: F401
 from datetime import datetime, timezone
 from sqlalchemy import DateTime, String, Boolean, Integer, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -20,6 +21,7 @@ class Channel(Base):
     # states: OFFLINE | READY | LIVE_ONLY | TV_VOD_RUNNING | TV_LIVE_RUNNING
     #         TV_LIVE_REQUESTED | TV_VOD_RETURNING
     auto_return_to_vod: Mapped[bool] = mapped_column(Boolean, default=True)
+    max_contributors: Mapped[int] = mapped_column(Integer, default=3)
     live_timeout_seconds: Mapped[int] = mapped_column(Integer, default=10)
     return_strategy: Mapped[str] = mapped_column(String(20), default="as_clock")
     # return_strategy: as_clock | resume_paused | filler_then_resume
@@ -41,3 +43,4 @@ class Channel(Base):
     schedule_blocks = relationship("ScheduleBlock", back_populates="channel", cascade="all, delete-orphan")
     playout_cursor = relationship("PlayoutCursor", back_populates="channel", uselist=False, cascade="all, delete-orphan")
     stream_targets = relationship("StreamTarget", back_populates="channel", cascade="all, delete-orphan")
+    contributors = relationship("Contributor", back_populates="channel", cascade="all, delete-orphan")

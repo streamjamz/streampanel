@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useAuthStore } from '../store/auth'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { Layout } from '../components/Layout'
@@ -19,6 +20,8 @@ function StreamTargets({ channelId }: { channelId: string }) {
   const [form, setForm] = useState({ platform: 'youtube', name: '', stream_key: '', rtmp_url: '' })
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{msg:string,type:string}|null>(null)
+  const role = useAuthStore((s: any) => s.role)
+  const isSuperAdmin = role === 'super_admin'
 
   const showToast = (msg: string, type = 'success') => { setToast({msg,type}); setTimeout(()=>setToast(null),3000) }
 
@@ -311,8 +314,10 @@ export default function ChannelDetail() {
   const [playback, setPlayback] = useState<any>(null)
   const [status, setStatus] = useState<any>(null)
   const [ingest, setIngest] = useState<any>(null)
+  const [toast, setToast] = useState<any>(null)
   const [tab, setTab] = useState<'preview'|'ingest'|'settings'>('preview')
-  const [toast, setToast] = useState<{msg:string;type:string}|null>(null)
+  const role = useAuthStore((s: any) => s.role)
+  const isSuperAdmin = role === 'super_admin'
   const logoRef = useRef<HTMLInputElement>(null)
 
   const showToast = (msg: string, type = 'success') => { setToast({msg,type}); setTimeout(()=>setToast(null),3000) }
@@ -463,16 +468,25 @@ export default function ChannelDetail() {
                   style={{ width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', color:'var(--text)', padding:'9px 12px', fontSize:13, boxSizing:'border-box' as const }} />
                 <div style={{ fontSize:11, color:'var(--text-3)', marginTop:5 }}>How long to wait after live encoder disconnects before returning to VOD.</div>
               </div>
+              {isSuperAdmin && (
+                <div style={{ marginBottom:16 }}>
+                  <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Max Contributors</label>
+                  <input id="mc-input" type="number" min="1" max="10" defaultValue={channel.max_contributors || 3}
+                    style={{ width:'100%', background:'var(--bg)', border:'1px solid var(--border)', borderRadius:'var(--r)', color:'var(--text)', padding:'9px 12px', fontSize:13, boxSizing:'border-box' as const }} />
+                  <div style={{ fontSize:11, color:'var(--text-3)', marginTop:5 }}>Maximum number of contributors (DJs/guests) allowed for this channel.</div>
+                </div>
+              )}
 
               <button
                 onClick={async () => {
                   const tz = (document.getElementById('tz-select') as HTMLSelectElement).value
                   const rs = (document.getElementById('rs-select') as HTMLSelectElement).value
+                  const mc = isSuperAdmin ? parseInt((document.getElementById('mc-input') as HTMLInputElement)?.value || '3') : channel.max_contributors
                   const lt = parseInt((document.getElementById('lt-input') as HTMLInputElement).value)
                   try {
                     const desc = (document.getElementById('desc-input') as HTMLTextAreaElement).value
-                    await api.put(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
-                    setChannel({ ...channel, timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc })
+                    await api.put(`/channels/${id}`, { timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc, max_contributors: mc })
+                    setChannel({ ...channel, timezone: tz, return_strategy: rs, live_timeout_seconds: lt, description: desc, max_contributors: mc })
                     showToast('Settings saved')
                   } catch { showToast('Failed to save settings', 'error') }
                 }}

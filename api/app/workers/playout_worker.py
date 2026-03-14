@@ -206,6 +206,26 @@ class PlayoutWorker:
     async def play_block(self, block, offset: float) -> bool:
         if not block or block.block_type == "filler_loop":
             return False
+        # Handle contributor blocks
+        if block.block_type == "contributor" and block.source_url and block.source_url.startswith("contributor:"):
+            contributor_key = block.source_url.replace("contributor:", "")
+            ch = await self._get_channel()
+            logo = ch.logo_path if ch else None
+            pos = (ch.logo_position or "top-right") if ch else "top-right"
+            rtmp_url = f"rtmp://127.0.0.1:1935/live/{contributor_key}"
+            cmd = build_ffmpeg_cmd_external(rtmp_url, logo, pos)
+            logger.info(f"[{CHANNEL_ID}] Playing contributor stream: {block.notes or contributor_key}")
+            self._proc_start_ts = datetime.now(timezone.utc).timestamp()
+            self._current_offset = 0
+            self._current_block_type = "contributor"
+            self._current_block_id = str(block.id)
+            self.idle = False
+            async with AsyncSessionLocal() as db:
+                await db.execute(update(Channel).where(Channel.id == CHANNEL_ID).values(state="TV_VOD_RUNNING"))
+                await db.commit()
+            self.current_proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            await self._save_cursor(block.id, 0)
+            return True
         if block.block_type in ("rtmp", "hls") and block.source_url:
             ch = await self._get_channel()
             logo = ch.logo_path if ch else None
@@ -343,18 +363,18 @@ class PlayoutWorker:
             if self.current_proc:
                 # For external sources (rtmp/hls), poll for schedule changes every 5s
                 current_block_type = getattr(self, '_current_block_type', 'asset')
-                if current_block_type in ('rtmp', 'hls'):
+                if current_block_type in ('rtmp', 'hls', 'contributor'):
                     while self.current_proc and self.current_proc.poll() is None:
                         await asyncio.sleep(5)
                         # Check if a different block should now be playing
                         new_block, new_offset = await get_current_block_for_channel()
                         logger.info(f"[{CHANNEL_ID}] Poll: new_block={new_block.id if new_block else None} current={getattr(self, '_current_block_id', None)}")
                         if new_block and str(new_block.id) != str(getattr(self, '_current_block_id', None)):
-                            logger.info(f"[{CHANNEL_ID}] Schedule change detected -- cutting RTMP/HLS")
+                            logger.info(f"[{CHANNEL_ID}] Schedule change detected -- cutting external stream")
                             self.kill_ffmpeg()
                             break
                         elif not new_block:
-                            logger.info(f"[{CHANNEL_ID}] No block found -- cutting RTMP/HLS to READY")
+                            logger.info(f"[{CHANNEL_ID}] No block found -- cutting external stream to READY")
                             self.kill_ffmpeg()
                             break
                 else:

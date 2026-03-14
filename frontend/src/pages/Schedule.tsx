@@ -112,12 +112,13 @@ export default function Schedule() {
   const [blocks, setBlocks] = useState<any[]>([])
   const [assets, setAssets] = useState<any[]>([])
   const [playlists, setPlaylists] = useState<any[]>([])
+  const [contributors, setContributors] = useState<any[]>([])
   const [nowPlaying, setNowPlaying] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const [blockType, setBlockType] = useState<'asset' | 'playlist' | 'rtmp' | 'hls'>('asset')
+  const [blockType, setBlockType] = useState<'asset' | 'playlist' | 'contributor' | 'rtmp' | 'hls'>('asset')
   const [sourceUrl, setSourceUrl] = useState('')
-  const [form, setForm] = useState({ start_time: '', asset_id: '', playlist_id: '', day_mask: 127, duration_secs: '3600' })
+  const [form, setForm] = useState({ start_time: '', asset_id: '', playlist_id: '', contributor_id: '', day_mask: 127, duration_secs: '3600' })
   const [editBlock, setEditBlock] = useState<any>(null)
   const [editForm, setEditForm] = useState({ start_time: '', day_mask: 127, source_url: '' })
   const [toast, setToast] = useState<any>(null)
@@ -141,6 +142,7 @@ export default function Schedule() {
     } finally { setLoading(false) }
   }
   useEffect(() => { load(); const iv = setInterval(load, 5000); return () => clearInterval(iv) }, [])
+  useEffect(() => { api.get(`/contributors/channel/${channelId}`).then(r => setContributors(r.data)).catch(() => {}) }, [channelId])
 
   const addBlock = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -148,6 +150,7 @@ export default function Schedule() {
     if (blockType === 'asset') payload.asset_id = form.asset_id
     if (blockType === 'playlist') payload.playlist_id = form.playlist_id
     if (blockType === 'rtmp' || blockType === 'hls') { payload.source_url = sourceUrl; payload.duration_secs = parseFloat(form.duration_secs) || 3600 }
+    if (blockType === 'contributor') { const c = contributors.find(ct => ct.id === form.contributor_id); if (c) { payload.source_url = 'contributor:' + c.stream_key; payload.duration_secs = parseFloat(form.duration_secs) || 3600; payload.notes = c.name; } }
     try {
       await api.post(`/schedule/channel/${channelId}`, payload)
       setShowAdd(false); setSourceUrl(''); showToast('Block added'); load()
@@ -203,6 +206,7 @@ export default function Schedule() {
 
   const blockLabel = (b: any) => {
     if (b.block_type === 'playlist') return `♫ ${b.playlist_name || b.playlist_id}`
+    if (b.block_type === 'contributor') return `🎙 ${b.notes || 'Contributor'}`
   if (b.block_type === 'rtmp') return `📡 RTMP: ${b.source_url || ''}` 
   if (b.block_type === 'hls') return `▶ HLS: ${b.source_url || ''}`
     return b.asset_name || b.asset_id
@@ -232,7 +236,7 @@ export default function Schedule() {
             <span style={{ width:8, height:8, borderRadius:'50%', background:'var(--green)', animation:'pulse 1.4s ease-in-out infinite', flexShrink:0 }}/>
             <div>
               <span style={{ fontSize:12, color:'var(--green)', fontWeight:600 }}>NOW PLAYING</span>
-              <span style={{ fontSize:13, color:'var(--text)', marginLeft:12 }}>{nowPlaying.block_type==='playlist'?'♫ Playlist':nowPlaying.block_type==='rtmp'?'📡 RTMP':nowPlaying.block_type==='hls'?'▶ HLS':nowPlaying.asset_id}</span>
+              <span style={{ fontSize:13, color:'var(--text)', marginLeft:12 }}>{nowPlaying.block_type==='playlist'?'♫ Playlist':nowPlaying.block_type==='contributor'?'🎙 '+nowPlaying.notes:nowPlaying.block_type==='rtmp'?'📡 RTMP':nowPlaying.block_type==='hls'?'▶ HLS':nowPlaying.asset_id}</span>
               <span style={{ fontSize:12, color:'var(--text-2)', marginLeft:8, fontFamily:'var(--mono)' }}>+{Math.floor(nowPlaying.offset_secs / 60)}m {Math.floor(nowPlaying.offset_secs % 60)}s</span>
             </div>
           </div>
@@ -305,14 +309,51 @@ export default function Schedule() {
         <Modal title="Add Schedule Block" onClose={() => setShowAdd(false)}>
           <form onSubmit={addBlock} style={{ display:'flex', flexDirection:'column', gap:14 }}>
             <div style={{ display:'flex', gap:1, background:'var(--border)', borderRadius:'var(--r)', padding:3 }}>
-              {(['asset','playlist','rtmp','hls'] as const).map(t => (
+              {(['asset','playlist','contributor','rtmp','hls'] as const).map(t => (
                 <button key={t} type="button" onClick={() => setBlockType(t)}
                   style={{ flex:1, padding:'6px 0', borderRadius:6, border:'none', cursor:'pointer', fontSize:13, fontWeight:blockType===t?600:400, background:blockType===t?'var(--bg-raised)':'transparent', color:blockType===t?'var(--text)':'var(--text-2)', fontFamily:'var(--sans)', transition:'all 0.12s' }}
-                >{t==='playlist'?'♫ Playlist':t==='rtmp'?'📡 RTMP':t==='hls'?'▶ HLS':'🎬 Asset'}</button>
+                >{t==='playlist'?'♫ Playlist':t==='contributor'?'🎙 Contributor':t==='rtmp'?'📡 RTMP':t==='hls'?'▶ HLS':'🎬 Asset'}</button>
               ))}
             </div>
+            ) : 
             <TimeInput value={form.start_time} onChange={(v:string)=>setForm({...form,start_time:v})}/>
-            {(blockType==='rtmp' || blockType==='hls') ? (
+            {blockType==='contributor' ? (
+              <div>
+                <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Contributor</label>
+                <select
+                  value={form.contributor_id || ''}
+                  onChange={(e:any) => setForm({...form, contributor_id: e.target.value})}
+                  required
+                  style={{ width:'100%', background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:'var(--r)', padding:'9px 12px', fontSize:13, color:'var(--text)', boxSizing:'border-box' }}
+                >
+                  <option value="">Select contributor…</option>
+                  {contributors.filter(c => c.is_active).map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.role})</option>
+                  ))}
+                </select>
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>Duration</label>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    {[['15m','900'],['30m','1800'],['1hr','3600'],['2hr','7200'],['3hr','10800']].map(([label, val]) => (
+                      <button key={val} type="button" onClick={() => setForm({...form, duration_secs: val})}
+                        style={{ padding:'5px 12px', borderRadius:6, border:`1px solid ${form.duration_secs===val?'var(--amber)':'var(--border)'}`, background:form.duration_secs===val?'var(--amber-dim)':'transparent', color:form.duration_secs===val?'var(--amber)':'var(--text-2)', fontSize:12, cursor:'pointer' }}>
+                        {label}
+                      </button>
+                    ))}
+                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                      <input type="number" min="1" placeholder="min" onChange={(e:any) => setForm({...form, duration_secs: String(parseInt(e.target.value||'0')*60)})}
+                        style={{ width:60, background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:6, padding:'5px 8px', fontSize:12, color:'var(--text)', textAlign:'center' }}/>
+                      <span style={{ fontSize:11, color:'var(--text-3)' }}>min</span>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                      <input type="number" min="1" placeholder="min" onChange={(e:any) => setForm({...form, duration_secs: String(parseInt(e.target.value||'0')*60)})}
+                        style={{ width:60, background:'var(--bg-raised)', border:'1px solid var(--border)', borderRadius:6, padding:'5px 8px', fontSize:12, color:'var(--text)', textAlign:'center' }}/>
+                      <span style={{ fontSize:11, color:'var(--text-3)' }}>min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (blockType==='rtmp' || blockType==='hls') ? (
               <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                 <div>
                   <label style={{ fontSize:11, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', display:'block', marginBottom:6 }}>

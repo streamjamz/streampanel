@@ -44,6 +44,7 @@ class ChannelUpdate(BaseModel):
     auto_return_to_vod: Optional[bool] = None
     logo_position: Optional[str] = None
     description: Optional[str] = None
+    max_contributors: Optional[int] = None
 
 
 @router.get("")

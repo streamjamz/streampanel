@@ -27,6 +27,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       { href:`/channels/${firstChannelId}/assets`,   icon:'↑', label:'Upload Videos' },
       { href:'/playlists',                           icon:'♫', label:'Playlists' },
       { href:`/channels/${firstChannelId}/schedule`, icon:'📅', label:'Schedule' },
+      { href:`/channels/${firstChannelId}/contributors`, icon:'🎙', label:'Contributors' },
     ] : []),
     ...(isSuperAdmin ? [
       { href:'/playlists',        icon:'♫', label:'Playlists' },

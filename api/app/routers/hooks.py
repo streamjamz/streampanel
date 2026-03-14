@@ -22,6 +22,7 @@ async def _verify_hook_secret(request: Request):
         raise HTTPException(status_code=403, detail="Invalid hook secret")
 
 async def _get_channel_by_stream_key(stream_name: str, db: AsyncSession):
+    # First check if it's a channel stream key
     result = await db.execute(select(Channel).where(Channel.stream_key == stream_name))
     ch = result.scalar_one_or_none()
     is_internal = False
@@ -40,8 +41,18 @@ async def _get_channel_by_stream_key(stream_name: str, db: AsyncSession):
                 is_internal = True
         except (ValueError, AttributeError):
             pass
+    
+    # If not found, check if it's a contributor stream key
+    if not ch:
+        from app.models.contributor import Contributor
+        result = await db.execute(select(Contributor).where(Contributor.stream_key == stream_name))
+        contributor = result.scalar_one_or_none()
+        if contributor:
+            # Return the contributor's channel
+            ch = await db.get(Channel, contributor.channel_id)
+            is_internal = False
+    
     return ch, is_internal
-
 @router.post("/srs/publish")
 async def srs_on_publish(
     request: Request,
@@ -63,7 +74,17 @@ async def srs_on_publish(
         logger.info(f"RTMP publish (playout): channel={ch.name} key={stream_name}")
         return {"code": 0}
 
-    # External encoder (OBS) connected
+    # Check if this is a contributor stream
+    from app.models.contributor import Contributor
+    result = await db.execute(select(Contributor).where(Contributor.stream_key == stream_name))
+    contributor = result.scalar_one_or_none()
+    
+    if contributor:
+        # Contributor connected - just log it, don't pause playout
+        logger.info(f"CONTRIBUTOR CONNECTED: {contributor.name} for channel={ch.name} (id={ch.id})")
+        return {"code": 0}
+
+    # External encoder (OBS) connected - this is a live cut-in
     logger.info(f"OBS CONNECTED: channel={ch.name} (id={ch.id}) key={stream_name}")
 
     # Update last_live_seen
@@ -75,16 +96,10 @@ async def srs_on_publish(
     await db.commit()
 
     # Pause playout worker immediately so OBS can take over
-    # ✅ FIX: Send to correct Redis channel (without :cmd suffix)
     try:
         redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
-        
-        # Send PAUSE command - worker expects this format
         await redis.publish(f"playout:{ch.id}:cmd", "PAUSE")
-        
-        # Also set OBS_CONNECTED flag
         await redis.set(f"channel:{ch.id}:OBS_CONNECTED", "1", ex=30)
-        
         await redis.aclose()
         logger.info(f"✓ Sent PAUSE command to playout:{ch.id}")
     except Exception as e:
@@ -97,7 +112,6 @@ async def srs_on_publish(
     await db.commit()
 
     return {"code": 0}
-
 @router.post("/srs/unpublish")
 async def srs_on_unpublish(
     request: Request,
