@@ -27,6 +27,7 @@ function CopyBox({ label, value }: { label: string, value: string }) {
 export default function Contributors() {
   const { id: channelId } = useParams<{ id: string }>()
   const [contributors, setContributors] = useState<any[]>([])
+  const [liveStatus, setLiveStatus] = useState<Set<string>>(new Set())
   const [channel, setChannel] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
@@ -39,6 +40,14 @@ export default function Contributors() {
   }
 
   const load = async () => {
+    // Load live status
+    try {
+      const statusResp = await api.get(`/contributors/channel/${channelId}/status`)
+      const liveKeys = new Set<string>(statusResp.data.filter((c: any) => c.is_live).map((c: any) => c.stream_key))
+      setLiveStatus(liveKeys)
+    } catch (err) {
+      // Ignore errors
+    }
     try {
       const [chRes, contRes] = await Promise.all([
         api.get(`/channels/${channelId}`),
@@ -54,6 +63,10 @@ export default function Contributors() {
   }
 
   useEffect(() => { load() }, [channelId])
+  useEffect(() => {
+    const interval = setInterval(load, 5000)
+    return () => clearInterval(interval)
+  }, [channelId])
 
   const addContributor = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -144,7 +157,7 @@ export default function Contributors() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>{c.name}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>{c.name}{liveStatus.has(c.stream_key) && <span style={{ fontSize: 11, fontWeight: 700, color: "#ef4444", display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444" }}></span>LIVE</span>}</div>
                       <div style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 5, background: 'rgba(168,85,247,0.12)', color: '#a855f7' }}>
                         {c.role}
                       </div>

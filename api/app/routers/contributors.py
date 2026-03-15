@@ -1,4 +1,6 @@
 import uuid
+import logging
+import httpx
 import secrets
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,8 +10,10 @@ from app.database import get_db
 from app.models.contributor import Contributor
 from app.models.channel import Channel
 from app.core.deps import get_current_user
+from app.models.user import User
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class ContributorCreate(BaseModel):
@@ -169,3 +173,46 @@ async def delete_contributor(
     await db.commit()
     
     return {"status": "deleted"}
+
+@router.get("/channel/{channel_id}/status")
+async def get_contributors_status(
+    channel_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get live status for all contributors of a channel."""
+    # Get all contributors for this channel
+    result = await db.execute(
+        select(Contributor)
+        .where(Contributor.channel_id == channel_id)
+        .order_by(Contributor.created_at.desc())
+    )
+    contributors = result.scalars().all()
+    
+    # Check SRS for active streams
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("http://127.0.0.1:1985/api/v1/streams/", timeout=2.0)
+            srs_data = resp.json()
+            active_keys = set()
+            for stream in srs_data.get("streams", []):
+                if stream.get("publish", {}).get("active"):
+                    active_keys.add(stream.get("name"))
+    except Exception as e:
+        logger.error(f"Failed to check SRS streams: {e}")
+        active_keys = set()
+    
+    # Build response with live status
+    return [
+        {
+            "id": str(c.id),
+            "name": c.name,
+            "role": c.role,
+            "stream_key": c.stream_key,
+            "is_active": c.is_active,
+            "is_live": c.stream_key in active_keys,
+            "created_at": c.created_at.isoformat()
+        }
+        for c in contributors
+    ]
