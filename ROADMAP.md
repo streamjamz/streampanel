@@ -85,3 +85,53 @@ Track cumulative bandwidth consumed per tenant per month.
 - Tenant usage widget (connections, bitrate, disk)
 - Real-time viewer count from nginx log parsing
 - External source scheduling groundwork (filler/fallback concept defined)
+
+### Priority 6 — VDO.Ninja Studio Talkback / Guest Integration
+- Self-host VDO.Ninja on vod.sjamz.com alongside StreamPanel
+- Each channel gets an auto-generated VDO.Ninja room
+- Channel manager gets a Director link, guests get a shareable invite link
+- No app needed for guests — browser only, works on mobile
+- Director controls who is heard/seen on air
+- Room output pushes as RTMP into SRS — schedulable as any RTMP block
+- Multiple guests supported natively
+- Status: 📋 Planned
+
+### Priority 2 — Auto Schedule Fill / Filler Source
+- Per-channel setting — tenants can enable or disable filler independently
+- Filler source options: playlist, RTMP URL, or HLS URL
+- When enabled: worker falls back to filler source when nothing is scheduled instead of going READY
+- When disabled: worker behaves as normal, goes READY when nothing is scheduled
+- Channel settings UI gets a Filler section with toggle + source picker
+- Status: 📋 Planned
+
+### Priority 3 — Multi-Source Channel Inputs / DJ Takeover
+- Each contributor gets their own RTMP stream key on SRS
+- Contributor profiles: name, auto-generated stream key, role (DJ/Guest/Co-host), active/inactive toggle
+- Scheduler shows contributor name in block dropdown — no need to paste RTMP URLs
+- Optional recurring slot on contributor profile — e.g. "DJ Kontrol every Friday 8pm-10pm", auto-populates schedule weekly
+- Manual schedule blocks can override recurring slots
+- Only one contributor plays on air at a time, others can be connected and waiting
+- **Contributor limit per channel** — super-admin sets limit per channel (default: 3)
+- Tenant UI shows slots used vs available e.g. "2 of 3 contributors used"
+- Hitting limit shows upgrade prompt — clean upsell hook for tiered plans
+- Super-admin can increase limit per channel from admin panel on upgrade
+- Same tier-limit pattern can be extended to storage, channel count, scheduled blocks etc.
+- Status: 📋 Planned
+
+## Development Notes
+
+### Priority 2 Status - ✅ UI Complete, Worker Integration Pending
+- Backend: filler settings API complete
+- Frontend: toggle, type selector, playlist/URL picker complete
+- **Next:** Integrate filler logic into playout_worker.py
+  - When schedule is empty and filler_enabled=true, play filler source
+  - When filler_enabled=false, go to READY state as normal
+
+### Priority 3 Status - ✅ UI Complete, SRS Integration Pending  
+- Backend: contributors table, API endpoints, stream key generation complete
+- Frontend: contributor management UI, limit enforcement, stream key display complete
+- **Next:** 
+  - Configure SRS to accept contributor stream keys
+  - Add contributor source type to schedule blocks
+  - Implement contributor switching in playout worker
+  - Add recurring schedule auto-population
