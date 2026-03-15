@@ -99,3 +99,57 @@ FastAPI
 ## License
 
 MIT
+
+## Contributors / DJ Takeover Feature
+
+Allows DJs, guests, and co-hosts to stream directly to your channel with their own credentials.
+
+### Setup
+
+1. **Add Contributors** (Admin → Contributors):
+   - Click "+ Add Contributor"
+   - Enter name and role (DJ/Guest/Co-host)
+   - System generates unique stream key automatically
+   - Copy RTMP server and stream key
+
+2. **Schedule Contributor Blocks**:
+   - Go to Schedule → Add Block → Contributor tab
+   - Select contributor from dropdown
+   - Set duration (15m, 30m, 1hr, 2hr, 3hr, or custom)
+   - Set start time
+   - Save
+
+3. **Go Live**:
+   - Contributor connects OBS anytime (VOD continues)
+   - At scheduled time, playout switches to contributor stream
+   - After duration, automatically returns to next scheduled block
+
+### OBS Setup for Contributors
+
+**Server:** rtmp://vod.sjamz.com:1935/live  
+**Stream Key:** (provided by admin, looks like `ctbfrd4nlJbiYAgDXJdXBn6P5x3KS4jZ`)
+
+**Settings → Video:**
+- Base (Canvas) Resolution: 1920x1080
+- Output (Scaled) Resolution: 1920x1080
+
+**Settings → Output:**
+- Video Bitrate: 4000 Kbps
+- Encoder: x264
+- Keyframe Interval: 2
+
+**Add your video source and right-click → Transform → Fit to Screen**
+
+### Live Status Indicator
+
+The Contributors page shows a 🔴 LIVE badge next to contributors who are currently streaming. Updates every 5 seconds.
+
+### Contributor Limits
+
+- Default: 3 contributors per channel
+- Super-admins can adjust limits in Channel Settings
+- Upgrade prompt shown when limit reached
+
+### Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues and solutions.

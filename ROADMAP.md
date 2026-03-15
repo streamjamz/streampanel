@@ -41,6 +41,29 @@ Multiple RTMP input keys per channel with live and scheduled switching.
 - Contributor keys managed in channel settings, each gets unique RTMP key
 - **Existing live cut-in and schedule features unchanged**
 
+## Priority 3: Contributors / DJ Takeover ✅ COMPLETE
+
+**Status:** ✅ Fully implemented and tested
+
+### Completed Features:
+- ✅ Contributor management system (add/edit/delete contributors)
+- ✅ Auto-generated unique stream keys per contributor
+- ✅ Contributor limit enforcement (default 3, super-admin adjustable)
+- ✅ Schedule integration with duration controls (15m/30m/1hr/2hr/3hr + custom)
+- ✅ Smart playout behavior:
+  - Contributors can connect anytime, VOD continues playing
+  - At scheduled time, playout switches to contributor stream
+  - After duration ends, auto-switches to next scheduled block
+- ✅ Live status indicator (🔴 LIVE badge, updates every 5s)
+- ✅ Copy-to-clipboard RTMP credentials
+- ✅ Upgrade prompts when contributor limit reached
+
+### Pending (Low Priority):
+- 📋 Recurring schedule slots (auto-populate weekly blocks)
+
+---
+
+## Priority 4: Advanced Scheduling & Automation
 ### Priority 4 — News Ticker / Lower Third Scroller
 Burn a scrolling news ticker into the stream via FFmpeg drawtext filter.
 - Pull headlines from multiple RSS feeds (BBC, AP, Reuters, etc.)
